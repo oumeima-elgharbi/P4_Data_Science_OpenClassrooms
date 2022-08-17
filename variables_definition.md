@@ -7,16 +7,8 @@ Source : https://data.seattle.gov/dataset/2016-Building-Energy-Benchmarking/2bpz
 
 - OSEBuildingID : A unique identifier assigned to each property covered by the Seattle Benchmarking Ordinance for tracking and identification purposes.
 
+
 ### Categorical variables (qualitative)
-
-#### Localisation :
-
-- Neighborhood : Property neighborhood area defined by the City of Seattle Department of Neighborhoods.
-
-- Latitude : Property latitude.
-
-- Longitude : Property longitude.
-
 
 #### Building characteristics :
 
@@ -25,12 +17,27 @@ Source : https://data.seattle.gov/dataset/2016-Building-Energy-Benchmarking/2bpz
 - PrimaryPropertyType : The primary use of a property (e.g. office, retail store). Primary use is defined as a function that accounts for more than 50% of a property. This is the Property Type - EPA Calculated field from Portfolio Manager.
   - EPA = Environmental Protection Agency (United States)
 
-- ListOfAllPropertyUseTypes : All property uses reported in Portfolio Manager
+- **ListOfAllPropertyUseTypes** : All property uses reported in Portfolio Manager
 
-- LargestPropertyUseType : The largest use of a property (e.g. office, retail store) by GFA.
+- **LargestPropertyUseType** : The largest use of a property (e.g. office, retail store) by GFA.
+
+- **SecondLargestPropertyUseType** : The second largest use of a property (e.g. office, retail store) by GFA.
+
+- **ThirdLargestPropertyUseType** : The third largest use of a property (e.g. office, retail store) by GFA.
 
 
 ### Numeric variables (quantitative) :
+
+#### Localisation :
+
+- Latitude : Property latitude.
+
+- Longitude : Property longitude.
+
+- ZipCode : Property zip
+
+- CouncilDistrictCode : Property City of Seattle council district.
+
 
 #### Building characteristics :
 
@@ -42,11 +49,17 @@ Source : https://data.seattle.gov/dataset/2016-Building-Energy-Benchmarking/2bpz
 
 - NumberofFloors : Number of floors reported in Portfolio Manager
 
-- PropertyGFATotal : Total building and parking gross floor area.
+- **PropertyGFATotal** : Total building and parking gross floor area.
 
-- PropertyGFABuilding(s) : Total floor space in square feet between the outside surfaces of a building’s enclosing walls. This includes all areas inside the building(s), such as tenant space, common areas, stairwells, basements, storage, etc.
+- **PropertyGFAParking** : Total space in square feet of all types of parking (Fully Enclosed, Partially Enclosed, and Open).
 
-- LargestPropertyUseTypeGFA : The gross floor area (GFA) of the largest use of the property.
+- **PropertyGFABuilding(s)** : Total floor space in square feet between the outside surfaces of a building’s enclosing walls. This includes all areas inside the building(s), such as tenant space, common areas, stairwells, basements, storage, etc.
+
+- **LargestPropertyUseTypeGFA** : The gross floor area (GFA) of the largest use of the property.
+
+- **SecondLargestPropertyUseTypeGFA** : The gross floor area (GFA) of the second largest use of the property.
+
+- **ThirdLargestPropertyUseTypeGFA** : The gross floor area (GFA) of the third largest use of the property.
 
   - N.B. : Gross floor area (GFA) = the total floor area contained within the building measured to the external face of the external walls. (Wikipedia)
 
@@ -59,9 +72,10 @@ Source : https://data.seattle.gov/dataset/2016-Building-Energy-Benchmarking/2bpz
   - documentation : https://www.energystar.gov/buildings/benchmark/analyze_benchmarking_results#what
 
 - Remarks : 
-  - The modern SI unit for heat energy is the joule (J); one BTU equals about 1055 J (varying within the range 1054–1060 J depending on the specific definition; source : wikipedia).
-  - kBtu : 1 kWh x 3.412 = 3.412 kBtu
-  - sf = square foot / 1 m² = 10.76391 sf / 1 sq = 0.092903 m²
+  - The modern SI unit for heat energy is the joule (J); one Btu equals about 1055 J (varying within the range 1054–1060 J depending on the specific definition; source : wikipedia).
+  - 1 kBtu = 1.055 MJ
+  - 1 kWh = 3.412 kBtu = 3.6 MJ
+  - sf = square foot / 1 m² = 10.76391 sf / 1 sf = 0.092903 m²
 
 - Remark EUI :
   - EUI : Energy Use Intensity (Energy in kBtu/sf)
