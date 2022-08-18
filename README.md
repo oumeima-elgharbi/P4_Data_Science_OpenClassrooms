@@ -11,3 +11,22 @@ Source  : https://data.seattle.gov/dataset/2016-Building-Energy-Benchmarking/2bp
 
 
 ## Execution
+
+
+## Methodology :
+
+Problematic :
+
+1) Get data
+2) Clean dataset
+3) Explore data (graphs, understand dataset)
+
+4) Scientific modelling
+5) Model evaluation
+
+#### Modelling : 
+features / variables to cross ??
+
+### Baselines
+Linear Regression
+XGBoost
