@@ -76,6 +76,7 @@ Source : https://data.seattle.gov/dataset/2016-Building-Energy-Benchmarking/2bpz
   - 1 kBtu = 1.055 MJ
   - 1 kWh = 3.412 kBtu = 3.6 MJ
   - sf = square foot / 1 m² = 10.76391 sf / 1 sf = 0.092903 m²
+  - 1 therm = 99.98 kBtu.
 
 - Remark EUI :
   - EUI : Energy Use Intensity (Energy in kBtu/sf)
