@@ -1,5 +1,13 @@
 # P4_Data_Science_OpenClassrooms
 
+
+Compliance Status : données cohérentes ou pas (Erreur : les retirer / outliers)
+outliers : 
+
+environ 3200 batiments
+qualité des predcitions
+explorer et analyser : graphiques / distriutions des variables que lon doit predire
+
 ## Context
 https://www.energystar.gov/buildings/benchmark/analyze_benchmarking_results
 
