@@ -3,6 +3,12 @@
 ### Interesting variables
 Source : https://data.seattle.gov/dataset/2016-Building-Energy-Benchmarking/2bpz-gwpy
 
+#### To remove outlier buildings :
+
+- ComplianceStatus : Whether a property has met energy benchmarking requirements for the current reporting year.
+
+- Outlier : Whether a property is a high or low outlier (Y/N)
+
 ### Unique ID, Primary Key
 
 - OSEBuildingID : A unique identifier assigned to each property covered by the Seattle Benchmarking Ordinance for tracking and identification purposes.
