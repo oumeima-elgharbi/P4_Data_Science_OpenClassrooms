@@ -6,6 +6,7 @@ import seaborn as sns
 # Set file name
 raw_dataset_file = "./dataset/2016_Building_Energy_Benchmarking.csv"
 
+
 def load_data(raw_dataset_file):
     """
 
@@ -15,6 +16,7 @@ def load_data(raw_dataset_file):
     # Load raw data
     raw_dataset = pd.read_csv(raw_dataset_file)
     return raw_dataset
+
 
 # Verification functions :
 
@@ -33,6 +35,7 @@ def verify_PropertyGFA(data_frame):
             print("HERE : ", index, row)
     print("End of checking.")
 
+
 def verify_min_value(data_frame, all_features, ceiling):
     """
 
@@ -50,6 +53,7 @@ def verify_min_value(data_frame, all_features, ceiling):
             features_with_negative_values.append(energy_feature)
     return features_with_negative_values
 
+
 # Cleaning pipeline
 def preprocess_features(raw_data):
     """
@@ -60,7 +64,13 @@ def preprocess_features(raw_data):
     print("Starting cleaning pipeline.")
     print("Initial shape :", raw_data.shape)
 
-    columns_to_drop = ["OSEBuildingID", "PropertyName", "ListOfAllPropertyUseTypes", "Address", "City", "State", "TaxParcelIdentificationNumber", "Neighborhood", "YearsENERGYSTARCertified", "DefaultData", "Comments", "Latitude", "Longitude"]
+    # Applying the condition
+    print("The minimum for the number of buildings is 0 which is not possible, we correct that by replacing 0 by 1.")
+    replace_value_for_a_feature(raw_data, "NumberofBuildings", 0, 1)
+
+    columns_to_drop = ["OSEBuildingID", "PropertyName", "ListOfAllPropertyUseTypes", "Address", "City", "State",
+                       "TaxParcelIdentificationNumber", "Neighborhood", "YearsENERGYSTARCertified", "DefaultData",
+                       "Comments", "Latitude", "Longitude"]
     all_data_v1 = drop_selected_features(raw_data, columns_to_drop)
     print("v1:", all_data_v1.shape)
 
@@ -78,13 +88,23 @@ def preprocess_features(raw_data):
     all_data_v5 = removing_outliers(all_data_v4, "SourceEUIWN(kBtu/sf)", 0, less_than_or_equal=False)
     print("v5:", all_data_v5.shape)
 
-    print("The computed remaining energy is the absolute value of the percentage of total energy that remaining energy has.")
-    print("The computation of the remaining energy is based on a hypothesis that the site energy is the sum of electricity, steam and natural gas.")
+    print(
+        "The computed remaining energy is the absolute value of the percentage of total energy that remaining energy has.")
+    print(
+        "The computation of the remaining energy is based on a hypothesis that the site energy is the sum of electricity, steam and natural gas.")
     all_data_v6 = compute_TotalEnergy(all_data_v5).sort_values(by="RemainingEnergy(%)", ascending=False)
     print("v6:", all_data_v6.shape)
 
     all_data_v7 = removing_outliers(all_data_v6, "RemainingEnergy(%)", 0.01, less_than_or_equal=True)
     print("v7:", all_data_v7.shape)
+
+    columns_to_categorize = ["DataYear", "BuildingType", "PrimaryPropertyType", "ZipCode", "CouncilDistrictCode", "YearBuilt", "LargestPropertyUseType", "SecondLargestPropertyUseType", "ThirdLargestPropertyUseType"]
+    all_data_v7 = assign_type_column(all_data_v7, columns_to_categorize, "category")
+    print("We have changed the type of the categorical features to 'category'.")
+
+
+
+
 
     # We reset the index
     all_data_vf = all_data_v7.reset_index(drop=True)
@@ -92,6 +112,19 @@ def preprocess_features(raw_data):
 
     print("End of pipeline.")
     return all_data_vf
+
+
+def replace_value_for_a_feature(data_frame, feature, old_value, new_value):
+    """
+
+    :param data_frame:
+    :param feature:
+    :param old_value:
+    :param new_value:
+    :return:
+    """
+    # Applying the condition
+    data_frame.loc[data_frame[feature] == old_value, feature] = new_value
 
 
 def drop_selected_features(data_frame, list_features_to_drop):
@@ -168,7 +201,6 @@ def removing_outliers(data_frame, feature, ceiling, less_than_or_equal=True):
     return df
 
 
-
 def drop_buildings_subset_nan(data_frame, features_to_check):
     """
 
@@ -190,6 +222,7 @@ def fill_nan_column_by_value(data_frame, column, value):
     df[column] = df[column].fillna(value)
     return df
 
+
 def compute_TotalEnergy(data_frame):
     """
 
@@ -200,10 +233,25 @@ def compute_TotalEnergy(data_frame):
     """
     df = data_frame.copy()
     # 1) We had a column that computes the difference between the Total Energy and Electricity, SteamUse and NaturalGas
-    df["RemainingEnergy(kBtu)"] = df["SiteEnergyUse(kBtu)"] - (df["Electricity(kBtu)"] + df["SteamUse(kBtu)"] + df["NaturalGas(kBtu)"])
+    df["RemainingEnergy(kBtu)"] = df["SiteEnergyUse(kBtu)"] - (
+                df["Electricity(kBtu)"] + df["SteamUse(kBtu)"] + df["NaturalGas(kBtu)"])
     # 2) we take the absolute vaue of the difference and round up to the superior unit.
-    df["RemainingEnergy(%)"] = round(abs(df["RemainingEnergy(kBtu)"] / df["SiteEnergyUse(kBtu)"] * 100), 1) # abs adds 5 buildings
+    df["RemainingEnergy(%)"] = round(abs(df["RemainingEnergy(kBtu)"] / df["SiteEnergyUse(kBtu)"] * 100),
+                                     1)  # abs adds 5 buildings
 
+    return df
+
+def assign_type_column(data_frame, columns, new_type):
+    """
+
+    :param data_frame:
+    :param columns:
+    :param new_type:
+    :return:
+    """
+    # Assigning a new type to the columns selected
+    df = data_frame.copy()
+    df[columns] = df[columns].astype(new_type)
     return df
 
 def save_cleaned_dataset(df, path):
