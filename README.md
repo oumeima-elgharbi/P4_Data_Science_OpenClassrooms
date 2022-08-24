@@ -10,6 +10,14 @@ https://www.energystar.gov/buildings/benchmark/analyze_benchmarking_results
 
 Source  : https://data.seattle.gov/dataset/2016-Building-Energy-Benchmarking/2bpz-gwpy
 
+## Libraries
+Install the python libraries with the same version :
+
+```bash
+pip install -r requirements.txt
+```
+
+pip freeze | findstr scikit-learn
 
 ## Execution
 You can run the notebook **P4_01_preprocess.ipynb** if you want to have a detailed explanation of the steps and cleaning and exploration of the raw dataset.
