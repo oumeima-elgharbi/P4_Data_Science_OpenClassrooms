@@ -1,5 +1,19 @@
-# P4_Data_Science_OpenClassrooms
+# P4_Data_Science_OpenClassrooms / Supervised Learning : Regression and Classification / here Regression
 
+Questions : 
+- 1 TODO) : nettoyage des outliers (retirer <P1 et >P95 et perte 11% données ??)
+- checker un ou deux outliers ** OKKK
+
+- 2 TODO) : matrice corr interpretation ? justification choix des var de prediction TODO
+- 3 TODO) : distribution : try code envoyé **TODO 
+- 
+- 4 TODO) : transformation ?? (normalisation ? log ?) : oui pour var 
+
+- coeff de skewness : si sup 2 : pas distr gaussienne !!
+- var qn : features transformées et var categ qui auront un impact sur le svar à predire
+
+- 5 TODO) : croiser quelles variables ?? (secondLargest? parking? nb floors ??)
+-
 ## Context
 https://www.energystar.gov/buildings/benchmark/analyze_benchmarking_results
 
