@@ -1,6 +1,22 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+
+def display_boxplot_per_feature(data_frame, x_all_features, y_category):
+    """
+
+    :param data_frame:
+    :param x_all_features: (list) a list of features to plot (column names, numeric variables)
+    :param y_category: (string) category to make different plots
+    :return:
+    """
+    # to make the graphs bigger
+    sns.set(rc={'figure.figsize':(15,15)})
+    for i, feature in enumerate(x_all_features):
+        plt.figure(i)
+        sns.boxplot(data=data_frame, x=feature, y=y_category)
+
+
 # From Jérémy Fasy
 # Grille des courbes de densité
 def densite(df, lines=7, cols=4):
