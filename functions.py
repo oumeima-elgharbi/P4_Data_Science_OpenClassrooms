@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 
 
 def display_boxplot_per_feature(data_frame, x_all_features, y_category):
@@ -30,6 +31,44 @@ def display_distribution_per_feature(data_frame, all_features, nb_bins):
         plt.title('Distribution of : ' + column)
         sns.histplot(data_frame[column], bins=nb_bins)
 
+
+# Graphs to see the effect of log transformation
+def compute_log_for_feature(data_frame, feature):
+    """
+
+    :param data_frame:
+    :param feature:
+    :return: (list)
+    """
+    df = data_frame.copy()
+
+    test = np.log(df[feature])
+    test1p = np.log1p(df[feature])
+    test2 = np.log2(df[feature])
+    test2p = np.log2(1 + df[feature])
+
+    all_log_transformations = [test, test1p, test2, test2p]
+    return all_log_transformations
+
+
+# Graphs to see the effect of log transformation
+def log_distribution(all_log_transformations):
+    """
+
+    :param all_log_transformations: (list) list of dataframes
+    :return:
+    """
+    plt.title('Distribution de la variable cible après transformation log (résersible)')
+    for i, df in enumerate(all_log_transformations):
+        plt.figure(i)
+        sns.distplot(df)
+    ax = plt.gca()
+    ax.legend(['log', 'log1p', 'log2', 'log2p'])
+
+    print("coeff de skewness : si sup 2 : pas distr gaussienne !!")
+    print(" var qn : features transformées et var categ qui auront un impact sur le svar à predire")
+
+
 def log_transformation(data_frame, features_to_predict):
     """
 
@@ -45,6 +84,7 @@ def log_transformation(data_frame, features_to_predict):
         # we add the transformed variable to our dataframe
         df[log_feature] = np.log2(1 + df[feature])
     return df
+
 
 # From Jérémy Fasy
 # Grille des courbes de densité
@@ -80,4 +120,4 @@ def extrems(df):
 
 
 if __name__ == '__main__':
-    densite()
+    pass
