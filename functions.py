@@ -11,11 +11,40 @@ def display_boxplot_per_feature(data_frame, x_all_features, y_category):
     :return:
     """
     # to make the graphs bigger
-    sns.set(rc={'figure.figsize':(15,15)})
+    sns.set(rc={'figure.figsize': (12, 6)})
     for i, feature in enumerate(x_all_features):
         plt.figure(i)
         sns.boxplot(data=data_frame, x=feature, y=y_category)
 
+
+def display_distribution_per_feature(data_frame, all_features, nb_bins):
+    """
+
+    :param data_frame:
+    :param all_features:
+    :param nb_bins:
+    :return:
+    """
+    for column in all_features:
+        plt.figure(figsize=(12, 6))
+        plt.title('Distribution of : ' + column)
+        sns.histplot(data_frame[column], bins=nb_bins)
+
+def log_transformation(data_frame, features_to_predict):
+    """
+
+    :param data_frame:
+    :param features_to_predict:
+    :return:
+    """
+    df = data_frame.copy()
+    print('Log2-transformation of the variables to predict.')
+    for feature in features_to_predict:
+        # we name the new variable
+        log_feature = "Log2-{}".format(feature)
+        # we add the transformed variable to our dataframe
+        df[log_feature] = np.log2(1 + df[feature])
+    return df
 
 # From Jérémy Fasy
 # Grille des courbes de densité

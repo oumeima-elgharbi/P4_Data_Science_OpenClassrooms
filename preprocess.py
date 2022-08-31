@@ -167,7 +167,6 @@ def verify_PropertyGFA(data_frame):
 
 def fill_property_use_type_GFA(data_frame):
     # 1) dropna for LargestPropertyUseTypeGFA
-    print("BEFORE CRASH 1")
 
     rows_to_drop = data_frame[data_frame["LargestPropertyUseTypeGFA"].isna()]
     index_to_drop = rows_to_drop.index
@@ -175,23 +174,14 @@ def fill_property_use_type_GFA(data_frame):
     # 2) we drop all the rows for which we have a NaN for LargestPropertyUseTypeGFA
     df = data_frame.copy()
     df = df.drop(index=index_to_drop)
-    print("BEFORE CRASH 2")
 
     # 3) We fill the NaN for SecondLargestPropertyUseTypeGFA and ThirdLargestPropertyUseTypeGFA
     df["SecondLargestPropertyUseTypeGFA"] = df["SecondLargestPropertyUseTypeGFA"].fillna(0)
     df["ThirdLargestPropertyUseTypeGFA"] = df["ThirdLargestPropertyUseTypeGFA"].fillna(0)
-    print("BEFORE CRASH 3")
-    if df["SecondLargestPropertyUseType"].dtypes == "category":
-        df["SecondLargestPropertyUseType"] = df["SecondLargestPropertyUseType"].cat.add_categories("None")
-        df["SecondLargestPropertyUseType"] = df["SecondLargestPropertyUseType"].fillna("None")
-    else:
-        df["SecondLargestPropertyUseType"] = df["SecondLargestPropertyUseType"].fillna("None")
 
-    if df["ThirdLargestPropertyUseType"].dtypes == "category":
-        df["ThirdLargestPropertyUseType"] = df["ThirdLargestPropertyUseType"].cat.add_categories("None")
-        df["ThirdLargestPropertyUseType"] = df["ThirdLargestPropertyUseType"].fillna("None")
-    else:
-        df["ThirdLargestPropertyUseType"] = df["ThirdLargestPropertyUseType"].fillna("None")
+    print("This won't work if you set the category before this function.")
+    df["SecondLargestPropertyUseType"] = df["SecondLargestPropertyUseType"].fillna("None")
+    df["ThirdLargestPropertyUseType"] = df["ThirdLargestPropertyUseType"].fillna("None")
 
     return df
 
