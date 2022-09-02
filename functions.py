@@ -54,8 +54,8 @@ def compute_log_effect_on_skewness(data_frame, features):
     """
 
     :param data_frame:
-    :param feature:
-    :return: (list)
+    :param features: (list)
+    :return: (DataFrame)
     """
     df = data_frame.copy()
     all_log_transformations = pd.DataFrame({})
@@ -65,10 +65,13 @@ def compute_log_effect_on_skewness(data_frame, features):
         test_log2 = np.log2(1 + df[feature])
         test_log10 = np.log10(1 + df[feature])
 
-        all_log_transformations.append({"feature": [feature],
-                                        "ln": [abs(test_ln.skew())],
-                                        "log-2": [abs(test_log2.skew())],
-                                        "log-10": [abs(test_log10.skew())]}, ignore_index=True)
+        test_df = pd.DataFrame({"feature": [feature],
+                                "ln": [abs(test_ln.skew())],
+                                "log-2": [abs(test_log2.skew())],
+                                "log-10": [abs(test_log10.skew())]})
+
+        all_log_transformations = pd.concat([all_log_transformations, test_df])
+
     return all_log_transformations
 
 
