@@ -331,6 +331,83 @@ def map_neighborhoods(data_frame):
     return df
 
 
+property_use_types_columns = ['SecondLargestPropertyUseType',
+                              'LargestPropertyUseType',
+                              'ThirdLargestPropertyUseType',
+                              'PrimaryPropertyType']
+
+usetype_dict = {'Retail Store': 'Retail',
+                'Supermarket/Grocery Store': 'Retail',
+                'Repair Services (Vehicle, Shoe, Locksmith, etc)': 'Retail',
+                'Automobile Dealership': 'Retail',
+                'Convenience Store without Gas Station': 'Retail',
+                'Personal Services': 'Retail',
+                'Enclosed Mall': 'Retail',
+                'Strip Mall': 'Retail',
+                'Wholesale Club/Supercenter': 'Retail',
+                'Other - Mall': 'Retail',
+                'Supermarket / Grocery Stor': 'Retail',
+
+                'Food Sales': 'Leisure',
+                'Restaurant': 'Leisure',
+                'Other - Restaurant/Bar': 'Leisure',
+                'Food Service': 'Leisure',
+                'Worship Facility': 'Leisure',
+                'Other - Recreation': 'Leisure',
+                'Other - Entertainment/Public Assembly': 'Leisure',
+                'Performing Arts': 'Leisure',
+                'Bar/Nightclub': 'Leisure',
+                'Movie Theater': 'Leisure',
+                'Museum': 'Leisure',
+                'Social/Meeting Hall': 'Leisure',
+                'Fitness Center/Health Club/Gym': 'Leisure',
+                'Lifestyle Center ': 'Leisure',
+                'Fast Food Restaurant': 'Leisure',
+
+                'Multifamily Housing': 'Hotel/Senior Care/Housing',
+                'Other - Lodging/Residential': 'Hotel/Senior Care/Housing',
+                'Residence Hall/Dormitory': 'Hotel/Senior Care/Housing',
+                'Hotel': 'Hotel/Senior Care/Housing',
+                'Senior Care Community': 'Hotel/Senior Care/Housing',
+                'Residential Care Facility': 'Hotel/Senior Care/Housing',
+                'High-Rise Multifamily': 'Hotel/Senior Care/Housing',
+
+                'Medical Office': 'Health',
+
+                'Other - Services': 'Office',
+                'Bank Branch': 'Office',
+                'Financial Office': 'Office',
+                'Other - Public Services': 'Office',
+
+                'K-12 School': 'Education',
+                'Other - Education': 'Education',
+                'Vocational School': 'Education',
+                'Adult Education': 'Education',
+                'Pre-school/Daycare': 'Education',
+                'University': 'Education',
+                'College/University': 'Education',
+                'Library': 'Education'
+                }
+
+
+def mapping_property_use_type(data_frame, property_use_types_columns, usetype_dict):
+    """
+
+    :param data_frame:
+    :return:
+    """
+    data = data_frame.copy()
+    print("Before")
+    print(data[property_use_types_columns].nunique().sort_values())
+
+    print("After")
+    for column in property_use_types_columns:
+        data[column] = data[column].replace(usetype_dict)
+
+    print(data[property_use_types_columns].nunique().sort_values())
+    return data
+
+
 def save_cleaned_dataset(df, path):
     # Save
     df.to_csv(path, index=False)

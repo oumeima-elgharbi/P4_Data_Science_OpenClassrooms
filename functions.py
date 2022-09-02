@@ -119,5 +119,6 @@ def extrems(df):
     return df.describe().loc[['min', '25%', '50%', '75%', 'max'], :]
 
 
+
 if __name__ == '__main__':
     pass
