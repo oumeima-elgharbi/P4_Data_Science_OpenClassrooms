@@ -69,20 +69,20 @@ def log_distribution(all_log_transformations):
     print(" var qn : features transformées et var categ qui auront un impact sur le svar à predire")
 
 
-def log_transformation(data_frame, features_to_predict):
+def log_transformation(data_frame, features):
     """
 
     :param data_frame:
-    :param features_to_predict:
+    :param features:
     :return:
     """
     df = data_frame.copy()
-    print('Log2-transformation of the variables to predict.')
-    for feature in features_to_predict:
+    print('Log-transformation of the variables to predict.')
+    for feature in features:
         # we name the new variable
-        log_feature = "Log2-{}".format(feature)
+        log_feature = "Log-{}".format(feature)
         # we add the transformed variable to our dataframe
-        df[log_feature] = np.log2(1 + df[feature])
+        df[log_feature] = np.log(df[feature])
     return df
 
 
