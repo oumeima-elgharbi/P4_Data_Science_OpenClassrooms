@@ -11,7 +11,6 @@ from time import time, strftime, gmtime
 pd.set_option('display.max_columns', 50)
 
 import warnings
-
 warnings.filterwarnings(action="ignore")
 
 

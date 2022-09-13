@@ -34,6 +34,8 @@ def evaluate_regression(model_name, result, y_test, y_pred):
                                               "MAE": [mae],
                                               "Median Absolute Error": [median_ae],
                                               "R² = 1 - RSE": [r2]})])
+    # we sort the datafraeme of results by best : by=["R² = 1 - RSE", "RMSE", "MAE"]
+    result = result.sort_values(by=["R² = 1 - RSE"], ascending=False)
     display(result)
 
     # 2) graph
