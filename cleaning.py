@@ -1,11 +1,12 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # to compute time of pipeline
 from time import time, strftime, gmtime
 
 import warnings
-
 warnings.filterwarnings(action="ignore")
 
 input_path = "./dataset/source/"
@@ -18,6 +19,30 @@ output_filename = "data_2016_tryout_1.csv"
 raw_dataset_file = "{}{}".format(input_path, input_filename)
 cleaned_dataset_file = "{}{}".format(output_path, output_filename)
 
+
+def display_barplot_na(df):
+    """
+
+    """
+    data_nan = df.isna().sum().sort_values(ascending=False).head(10)
+    plt.figure(figsize=(10, 8))
+    plt.title('Proportion of NaN per feature (%)')
+    sns.barplot(x=(100 * data_nan.values / df.shape[0]), y=data_nan.index)
+
+
+def display_countplot(df, feature):
+    """
+
+    """
+    print(
+        "This is an histogram that presents the distribution of the values of the variable {} by counting them.".format(
+            feature))
+    # to make the graphs bigger
+    sns.set(rc={'figure.figsize': (12, 8)})
+    sns.countplot(data=df, x=feature)  # countnplot is for discrete variable / categories here.
+
+
+#############################
 
 def load_data(dataset_file):
     """
@@ -39,15 +64,61 @@ def dropping_non_relevant_columns(df):
     """
     1)
     """
-    print("___Filling Second/ThirdLargestPropertyUseType___")
+    print("___Dropping non relevant columns___")
     data_frame = df.copy()
     print("Before :", data_frame.shape)
 
     columns_to_drop = ["DataYear", "PropertyName", "ListOfAllPropertyUseTypes", "Address", "City", "State",
                        "TaxParcelIdentificationNumber", "YearsENERGYSTARCertified", "DefaultData",
                        "Comments", "Latitude", "Longitude"]
+    print("These are the columns to remove :", columns_to_drop)
+
     data_frame = data_frame.drop(columns=columns_to_drop)
 
+    print("After :", data_frame.shape)
+    return data_frame
+
+
+def input_zipcode(df):
+    """
+    :UC: the dataframe must be raw
+    """
+    columns = df.columns.tolist()
+    assert "Address" in columns and "ZipCode" in columns, "You need Address and ZipCode."
+
+    print("___Inputting missing ZipCode___")
+    data_frame = df.copy()
+    print("Before :", data_frame.shape)
+
+    all_zipcode = data_frame["ZipCode"].unique().tolist()
+    print("We have :", len(all_zipcode), "unique zipcodes.")
+
+    # DataFrame with 16 missing ZipCodes
+    zipcode_na_df = data_frame[data_frame["ZipCode"].isna()]
+    print("We have :", zipcode_na_df.shape[0], "missing ZipCodes.")
+
+    # We make a list with the address of the building for which the ZipCode is missing.
+    zipcode_na_list_address = zipcode_na_df["Address"].tolist()
+    zipcode_na_list = [[i, ""] for i in zipcode_na_list_address]
+
+    # This is the list of zipcodes for each of the 16 missing zipcode. We found it on searching on internet using the Address
+    correct_zipcode = [98125, 98144, 98117, 98125, 98107, 98117, 98119, 98112, 98122, 98118, 98126, 98108, 98104, 98119,
+                       98108, 98108]
+    # print(len(right_zipcode))
+
+    for i, zipcode in enumerate(correct_zipcode):
+        zipcode_na_list[i][1] = zipcode
+    # print(zipcode_na_list)
+
+    print("We replace the missing ZipCodes by their correct value.")
+    # zipcode_na_df.index
+    # We iterate on the index of the buildings for which the ZipCode is missing
+    for i, index in enumerate(zipcode_na_df.index):
+        data_frame.at[index, "ZipCode"] = correct_zipcode[i]
+
+    # Verification
+    display(data_frame[data_frame["ZipCode"].isna()])
+    print("We have :", zipcode_na_df.shape[0], "missing ZipCodes.")
     print("After :", data_frame.shape)
     return data_frame
 
@@ -62,12 +133,15 @@ def filling_property_use_type(df):
     data_frame = df.copy()
     print("Before :", data_frame.shape)
 
+    display_barplot_na(data_frame)
+
     # Inputting missing values for SecondLargestPropertyUseType (we use Parking as the default type)
     _filter = data_frame['PropertyGFAParking'] > 0
     # if the value for parking is positive, then we say this is a Parking
     data_frame.loc[_filter, 'SecondLargestPropertyUseType'].fillna('Parking', inplace=True)
     # we put the value for parking
-    data_frame.loc[_filter, 'SecondLargestPropertyUseTypeGFA'].fillna(data_frame.loc[_filter, 'PropertyGFAParking'], inplace=True)
+    data_frame.loc[_filter, 'SecondLargestPropertyUseTypeGFA'].fillna(data_frame.loc[_filter, 'PropertyGFAParking'],
+                                                                      inplace=True)
 
     data_frame['SecondLargestPropertyUseType'].fillna('No use', inplace=True)
     data_frame['SecondLargestPropertyUseTypeGFA'].fillna(0, inplace=True)
@@ -77,12 +151,13 @@ def filling_property_use_type(df):
     data_frame['ThirdLargestPropertyUseTypeGFA'].fillna(0, inplace=True)
 
     print("After :", data_frame.shape)
+    display_barplot_na(data_frame)
     return data_frame
 
 
 def dropping_missing_values(df):
     """
-    Step 2)
+    Step 3)
     :param df: (DataFrame)
 
     """
@@ -90,11 +165,9 @@ def dropping_missing_values(df):
     data_frame = df.copy()
     print("Before :", data_frame.shape)
 
-    # Suppression des lignes contenant des NA
-    # data_frame.dropna(inplace=True)
-    data_frame = data_frame.dropna()
+    # Deleting rows containing NaN
+    data_frame = data_frame.dropna()  # data_frame.dropna(inplace=True)
 
-    # Valeurs manquantes restantes
     print("After cleaning missing values, the file contains {} rows et {} columns.".format(data_frame.shape[0],
                                                                                            data_frame.shape[1]))
     print("Remaining missing values : " + str(data_frame.isnull().sum().sum()))
@@ -103,83 +176,86 @@ def dropping_missing_values(df):
     return data_frame
 
 
-def convert_type(df, raw_data_frame):
+def convert_type_and_map(df):
     """
-    3 ***********
+    4) Converts datatype and maps categorical values
 
     """
     print("___Assigning datatype___")
     data_frame = df.copy()
-    print("Before :", data_frame.shape)
+    # Checking datatype for each feature
+    print("Before :", data_frame.dtypes)
 
-    # Variables qualitatives => type objet
-    col_object = ['OSEBuildingID', 'CouncilDistrictCode']
-
-    # Contrôle du type des variables
-    df_types = data_frame.join(raw_data_frame['ENERGYSTARScore'])
-    print(df_types.dtypes)
-
+    # Qualitative variables => object type
+    col_object = ['OSEBuildingID', 'CouncilDistrictCode', 'ZipCode']
     for col in col_object:
-        df_types[col] = df_types[col].astype('object')
+        data_frame[col] = data_frame[col].astype('object')
 
-    # Variables quantitatives => type numérique
-    col_int = ['NumberofFloors']
-    col_float = ['Latitude', 'Longitude']
-
+    # Quantitative variables => numerical type
+    col_int = ['NumberofFloors', 'NumberofBuildings']
     for col in col_int:
-        df_types[col] = df_types[col].astype(np.int64)
+        data_frame[col] = data_frame[col].astype(np.int64)
 
-    for col in col_float:
-        df_types[col] = df_types[col].astype(np.float64)
+    # col_float = ['Latitude', 'Longitude']
+    # for col in col_float:
+    #    data_frame[col] = data_frame[col].astype(np.float64)
 
-    # Uniformisation de la capitalisation
-    cols_non_numeric = df_types.select_dtypes(exclude='number').columns
-    df_types[cols_non_numeric] = df_types[cols_non_numeric].apply(lambda x: x.astype(str).str.capitalize())
+    # Capitalization standardization
+    cols_non_numeric = data_frame.select_dtypes(exclude='number').columns
+    print("We capitalize these columns :", cols_non_numeric)
+    data_frame[cols_non_numeric] = data_frame[cols_non_numeric].apply(lambda x: x.astype(str).str.capitalize())
+    print("We change delridge neighborhoods to delridge manually.")
+    replace_value_for_a_feature(data_frame, "Neighborhood", "Delridge neighborhoods", "Delridge")
 
-    print("After :", df_types.shape)
-    return df_types
+    print("After :", data_frame.dtypes)
+    return data_frame
 
 
 def dropping_negative_values(df):
     """
-    4
+    5)
     """
     print("___Dropping buildings with negative values___")
     data_frame = df.copy()
     print("Before :", data_frame.shape)
 
-    # Liste des colonnes numériques
+    # List of numerical columns
     cols_numeric = data_frame.select_dtypes(include='number').columns
+    print("We have", len(cols_numeric) - 1, "numerical columns without the ENERGYSTARScore.")
 
-    # On ne garde que les observations sans valeurs négatives
-    df_positive = data_frame.loc[:, [x for x in cols_numeric if x not in ['Longitude', 'Latitude', 'ENERGYSTARScore']]]
-    data_frame = data_frame[(df_positive.select_dtypes(include='number') >= 0).all(axis=1)].copy()
-
-    # Valeurs négatives
-    print("Après nettoyage des valeurs négatives, le fichier comporte {} lignes".format(data_frame.shape[0]))
+    # We only keep the rows / buildings without negative values
+    df_positive = data_frame.loc[:, [x for x in cols_numeric if x not in ['ENERGYSTARScore']]]
+    data_frame = data_frame[
+        (df_positive.select_dtypes(include='number') >= 0).all(axis=1)].copy()  # all to get all columns
 
     print("After :", data_frame.shape)
     return data_frame
 
 
-def input_propertyGFATotal(df):
+def verify_PropertyGFA(df):
     """
-    5
+    6.1)
+    :param data_frame:
+    :return:
+
+    :UC: 100% filled df[["PropertyGFATotal", "PropertyGFABuilding(s)", "PropertyGFAParking"]]
     """
-    print("___Inputting correct propertyGFATotal after removing negative values above___")
+    print("___Checking PropertyGFATotal___")
     data_frame = df.copy()
-    print("Before :", data_frame.shape)
+    print("Before :", data_frame.shape)  ####
+    data_frame = data_frame[["PropertyGFATotal", "PropertyGFABuilding(s)", "PropertyGFAParking"]]
 
-    # On imputele vrai total à la surface totale
-    data_frame['PropertyGFATotal'] = data_frame['PropertyGFAParking'] + data_frame['PropertyGFABuilding(s)']
-
-    print("After :", data_frame.shape)
-    return data_frame
+    print("Starting checking")
+    for index, row in data_frame.iterrows():
+        if row["PropertyGFATotal"] != row["PropertyGFABuilding(s)"] + row["PropertyGFAParking"]:
+            print("This building doesn't have a right PropertyGFATotal : ", index, row)
+    print("End of checking")
+    print("After :", data_frame.shape)  ###
 
 
 def keep_compliant(df):
     """
-    6
+    7) drops Outlier and ComplianceStatus
     """
     print("___Keeping compliant buildings only___")
     data_frame = df.copy()
@@ -188,49 +264,60 @@ def keep_compliant(df):
     # On ne garde que les observations avec le status "Compliant" (conforme)
     data_frame = data_frame[data_frame['ComplianceStatus'] == 'Compliant']
 
+    print("We delete the columns ComplianceStatus and Outlier.")
+    data_frame = drop_selected_features(data_frame, ["ComplianceStatus", "Outlier"])
+
     print("After :", data_frame.shape)
     return data_frame
 
 
 def compute_total_energy(df):
     """
-    7*****
+    8*****
     """
     print("___Computing Total Energy___")
     data_frame = df.copy()
     print("Before :", data_frame.shape)
 
-    # Création d'une variable pour les autres sources d'énérgie
-    data_frame['Others(kBtu)'] = data_frame['SiteEnergyUse(kBtu)'] - data_frame['SteamUse(kBtu)'] - data_frame[
-        'Electricity(kBtu)'] - data_frame['NaturalGas(kBtu)']
+    # 1) We add a column that computes the difference between the Total Energy and Electricity, SteamUse and NaturalGas
+    data_frame["RemainingEnergy(kBtu)"] = data_frame["SiteEnergyUse(kBtu)"] - data_frame["SteamUse(kBtu)"] - data_frame[
+        "Electricity(kBtu)"] - data_frame["NaturalGas(kBtu)"]
 
-    print("Shape : 3219, 44", data_frame.shape)
+    # 2) we take the absolute value of the difference and round up to the superior unit.
+    data_frame["RemainingEnergy(%)"] = round(
+        abs(data_frame["RemainingEnergy(kBtu)"] / data_frame["SiteEnergyUse(kBtu)"] * 100),
+        1)  # abs adds 5 buildings
 
-    # Suppression des observations avec total énergie qui est significativement inférieur à la somme des composantes
+    data_frame = data_frame.sort_values(by="RemainingEnergy(%)", ascending=False)
+    print(data_frame)
+    print("Shape :", data_frame.shape)
+
+    # 3) Suppression des observations avec total énergie qui est significativement inférieur à la somme des composantes
     # ce qui correspond à "Others(kbtu)" inférieur à 0,
-    # car elle vient d'être calculée par différence entre le total énérgie et ses 3 premières composantes
 
-    # On supprime les observations avec des consommations d'autres énergie inférieures à 0 ==> 823 lignes
-    to_drop1 = data_frame['Others(kBtu)'] < 0
+    # On supprime les observations avec des consommations d'autres énergie inférieures à 0 ==> 794 lignes
+    to_drop1 = data_frame["RemainingEnergy(kBtu)"] < 0
 
-    # On ne supprime que si le montant inférieur à 0 est significatif par rapport à la consommation totale ==> 36 lignes
-    to_drop2 = np.abs(data_frame['Others(kBtu)']) > (0.001 * data_frame['SiteEnergyUse(kBtu)'])
+    # On ne supprime que si le montant inférieur à 0 est significatif par rapport à la consommation totale ==> 37 lignes
+    to_drop2 = np.abs(data_frame["RemainingEnergy(kBtu)"]) > (0.001 * data_frame['SiteEnergyUse(kBtu)'])
+    print(to_drop2)
 
-    # suppression des consommations d'autres énérgie négatives lorsque significatives
+    to_drop3 = np.abs(data_frame["RemainingEnergy(kBtu)"]) > (0.01 * data_frame['SiteEnergyUse(kBtu)'])
+    print(to_drop3)
+
+
+# suppression des consommations d'autres énérgie négatives lorsque significatives ==> 5 buildings
     to_drop = to_drop1 & to_drop2
-    data_frame = data_frame[~to_drop]
+    data_frame = data_frame[~to_drop3]
 
     # Imputation à 0 des consommations d'autres énérgie négatives lorsque non significatives
-    data_frame.loc[data_frame['Others(kBtu)'] < 0, 'Others(kBtu)'] = 0
+    data_frame.loc[data_frame["RemainingEnergy(kBtu)"] < 0, "RemainingEnergy(kBtu)"] = 0
 
     # Renomme la variable de consommation totale d'énergie
-    data_frame = data_frame.rename(columns={'SiteEnergyUse(kBtu)': 'Total_energy'})
+    data_frame = data_frame.rename(columns={"SiteEnergyUse(kBtu)": "TotalEnergy(kBtu)"})
 
     print("After :", data_frame.shape)
     return data_frame
-
-
-
 
 
 def save_dataset_csv(data_frame, path):
@@ -249,120 +336,34 @@ def cleaning_pipeline():
     """
     print("_____Starting cleaning pipeline_____")
     raw_dataset = load_data(raw_dataset_file)
-    
-    dropping_non_relevant_columns()
 
-    data_v1 = filling_property_use_type(raw_dataset)
-    data_v2 = dropping_missing_values(data_v1)
-    data_v3 = convert_type(data_v2, raw_dataset)
-    data_v4 = dropping_negative_values(data_v3)
-    data_v5 = input_propertyGFATotal(data_v4)
-    data_v6 = keep_compliant(data_v5)
-    data_v7 = compute_total_energy(data_v6)
-    #data_v8 = transforming_building_type(data_v7)
+    data_v1 = input_zipcode(raw_dataset)  # here because inputting needs all buildings
+    data_v2 = dropping_non_relevant_columns(data_v1)
+    display_countplot(data_v2, feature="ComplianceStatus")
+    data_v3 = keep_compliant(data_v2)
+    data_v4 = filling_property_use_type(data_v3)
 
-    save_dataset_csv(data_v7, cleaned_dataset_file)
+    # data_v4 = dropping_missing_values(data_v3)
+    features_with_nan = data_v4.columns.tolist()
+    features_with_nan.remove("ENERGYSTARScore")
+    print(features_with_nan)
+    data_v5 = drop_buildings_subset_nan(data_v4, features_with_nan)
+
+    data_v6 = convert_type_and_map(data_v5)
+    data_v7 = dropping_negative_values(data_v6)  # removes one building
+
+    verify_PropertyGFA(data_v7)
+    # data_v8 = input_propertyGFATotal(data_v7)
+
+    data_v8 = compute_total_energy(data_v7)
+
+    # data_v8 = transforming_building_type(data_v7)
+
+    save_dataset_csv(data_v8, cleaned_dataset_file)
     print("_____End of cleaning pipeline_____")
 
 
 # Verification functions :
-
-def verify_PropertyGFA(data_frame):
-    """
-
-    :param data_frame:
-    :return:
-
-    :UC: 100% filled df[["PropertyGFATotal", "PropertyGFABuilding(s)", "PropertyGFAParking"]]
-    """
-    df = data_frame.copy()
-    df = df[["PropertyGFATotal", "PropertyGFABuilding(s)", "PropertyGFAParking"]]
-
-    print("Starting checking")
-    for index, row in df.iterrows():
-        if row["PropertyGFATotal"] != row["PropertyGFABuilding(s)"] + row["PropertyGFAParking"]:
-            print("HERE : ", index, row)
-    print("End of checking.")
-
-
-def verify_min_value(data_frame, all_features, ceiling):
-    """
-
-    :param data_frame:
-    :param all_features:
-    :param ceiling:
-    :return:
-    """
-    features_with_negative_values = []
-    print("Starting checking")
-
-    for energy_feature in all_features:
-        energy_min = data_frame[energy_feature].min()
-        if energy_min < ceiling:
-            print("For this feature :", energy_feature, "we have this negative value :", energy_min)
-            features_with_negative_values.append(energy_feature)
-
-    print("End of checking.")
-    return features_with_negative_values
-
-
-# Cleaning pipeline
-def preprocess_features(raw_data):
-    """
-
-    :param raw_data:
-    :return:
-    """
-    print("Starting cleaning pipeline.")
-    print("Initial shape :", raw_data.shape)
-
-    # Applying the condition
-    # print("The minimum for the number of buildings is 0 which is not possible, we correct that by replacing 0 by 1.")
-    # replace_value_for_a_feature(raw_data, "NumberofBuildings", 0, 1)
-
-    columns_to_drop = ["DataYear", "PropertyName", "ListOfAllPropertyUseTypes", "Address", "City", "State",
-                       "TaxParcelIdentificationNumber", "YearsENERGYSTARCertified", "DefaultData",
-                       "Comments", "Latitude", "Longitude"]
-    all_data_v1 = drop_selected_features(raw_data, columns_to_drop)
-    print("v1:", all_data_v1.shape)
-
-    # all_data_v2 = fill_property_use_type_GFA(all_data_v1)
-    all_data_v2 = filling_property_use_type(all_data_v1)
-    print("v2:", all_data_v2.shape)
-
-    all_data_v3 = drop_outliers_based_on_dataset(all_data_v2)
-    print("v3:", all_data_v3.shape)
-
-    features_with_nan = ["SiteEUI(kBtu/sf)", "SiteEUIWN(kBtu/sf)"]
-    all_data_v4 = drop_buildings_subset_nan(all_data_v3, features_with_nan)
-    all_data_v4 = fill_nan_column_by_value(all_data_v4, "ENERGYSTARScore", -1)
-    print("v4:", all_data_v4.shape)
-
-    all_data_v5 = removing_outliers(all_data_v4, "SourceEUIWN(kBtu/sf)", 0, less_than_or_equal=False)
-    print("v5:", all_data_v5.shape)
-
-    print(
-        "The computed remaining energy is the absolute value of the percentage of total energy that remaining energy has.")
-    print(
-        "The computation of the remaining energy is based on a hypothesis that the site energy is the sum of electricity, steam and natural gas.")
-    all_data_v6 = compute_TotalEnergy(all_data_v5).sort_values(by="RemainingEnergy(%)", ascending=False)
-    print("v6:", all_data_v6.shape)
-
-    all_data_v7 = removing_outliers(all_data_v6, "RemainingEnergy(%)", 0.01, less_than_or_equal=True)
-    print("v7:", all_data_v7.shape)
-
-    columns_to_categorize = ["DataYear", "BuildingType", "PrimaryPropertyType", "ZipCode", "CouncilDistrictCode",
-                             "YearBuilt", "LargestPropertyUseType", "SecondLargestPropertyUseType",
-                             "ThirdLargestPropertyUseType"]
-    all_data_v7 = assign_type_column(all_data_v7, columns_to_categorize, "category")
-    print("We have changed the type of the categorical features to 'category'.")
-
-    # We reset the index
-    all_data_vf = all_data_v7.reset_index(drop=True)
-    print("Final shape of our dataset : ", all_data_vf.shape)
-
-    print("End of pipeline.")
-    return all_data_vf
 
 
 def replace_value_for_a_feature(data_frame, feature, old_value, new_value):
@@ -405,52 +406,6 @@ def verify_PropertyGFA(data_frame):
     print("End of checking.")
 
 
-def fill_property_use_type_GFA(data_frame):
-    # 1) dropna for LargestPropertyUseTypeGFA
-
-    rows_to_drop = data_frame[data_frame["LargestPropertyUseTypeGFA"].isna()]
-    index_to_drop = rows_to_drop.index
-
-    # 2) we drop all the rows for which we have a NaN for LargestPropertyUseTypeGFA
-    df = data_frame.copy()
-    df = df.drop(index=index_to_drop)
-
-    # 3) We fill the NaN for SecondLargestPropertyUseTypeGFA and ThirdLargestPropertyUseTypeGFA
-    df["SecondLargestPropertyUseTypeGFA"] = df["SecondLargestPropertyUseTypeGFA"].fillna(0)
-    df["ThirdLargestPropertyUseTypeGFA"] = df["ThirdLargestPropertyUseTypeGFA"].fillna(0)
-
-    print("This won't work if you set the category before this function.")
-    df["SecondLargestPropertyUseType"] = df["SecondLargestPropertyUseType"].fillna("None")
-    df["ThirdLargestPropertyUseType"] = df["ThirdLargestPropertyUseType"].fillna("None")
-
-    return df
-
-
-def drop_outliers_based_on_dataset(data_frame):
-    """
-
-    :param data_frame:
-    :return:
-    """
-    df = data_frame.copy()
-
-    # ComplianceStatus
-    print("Before removing the non compliant buildings :", df.shape)
-    non_compliant_status = ['Error - Correct Default Data', 'Missing Data', 'Non-Compliant']
-    df = df[~df["ComplianceStatus"].isin(non_compliant_status)]
-    print("After removing the non compliant buildings :", df.shape)
-
-    # Outliers
-    print("Before removing the 32 outliers :", df.shape)
-    df = df[df["Outlier"].isna()]
-    print("After removing the outliers :", df.shape)
-
-    print("We delete the columns ComplianceStatus and Outlier.")
-    df = drop_selected_features(df, ["ComplianceStatus", "Outlier"])
-
-    return df
-
-
 def removing_outliers(data_frame, feature, ceiling, less_than_or_equal=True):
     """
 
@@ -465,80 +420,25 @@ def removing_outliers(data_frame, feature, ceiling, less_than_or_equal=True):
     return df
 
 
-def drop_buildings_subset_nan(data_frame, features_to_check):
+def drop_buildings_subset_nan(df, features_to_check):
     """
 
     :param data_frame:
     :param features_to_check:
     :return:
     """
-    df = data_frame.dropna(subset=features_to_check)
-    return df
+    print("___Dropping buildings with missing values___")
+    data_frame = df.copy()
+    print("Before :", data_frame.shape)
 
+    data_frame = data_frame.dropna(subset=features_to_check)
+    # Deleting rows containing NaN
+    print("After cleaning missing values, the file contains {} rows et {} columns.".format(data_frame.shape[0],
+                                                                                           data_frame.shape[1]))
+    print("Remaining missing values : " + str(data_frame.isnull().sum().sum()))
 
-def fill_nan_column_by_value(data_frame, column, value):
-    """
-
-    :param data_frame:
-    :return:
-    """
-    df = data_frame.copy()
-    df[column] = df[column].fillna(value)
-    return df
-
-
-def compute_TotalEnergy(data_frame):
-    """
-
-    :param data_frame:
-    :return:
-
-    :UC: 100% filled df[["SiteEnergyUse(kBtu)", "Electricity(kBtu)", "SteamUse(kBtu)", "NaturalGas(kBtu)"]]
-    """
-    df = data_frame.copy()
-    # 1) We had a column that computes the difference between the Total Energy and Electricity, SteamUse and NaturalGas
-    df["RemainingEnergy(kBtu)"] = df["SiteEnergyUse(kBtu)"] - (
-            df["Electricity(kBtu)"] + df["SteamUse(kBtu)"] + df["NaturalGas(kBtu)"])
-    # 2) we take the absolute vaue of the difference and round up to the superior unit.
-    df["RemainingEnergy(%)"] = round(abs(df["RemainingEnergy(kBtu)"] / df["SiteEnergyUse(kBtu)"] * 100),
-                                     1)  # abs adds 5 buildings
-
-    return df
-
-
-def assign_type_column(data_frame, columns, new_type):
-    """
-
-    :param data_frame:
-    :param columns:
-    :param new_type:
-    :return:
-    """
-    # Assigning a new type to the columns selected
-    df = data_frame.copy()
-    df[columns] = df[columns].astype(new_type)
-    return df
-
-
-def map_neighborhoods(data_frame):
-    """
-
-    :param data_frame:
-    :return:
-    """
-    df = data_frame.copy()
-    mapper = {}
-    for neighborhood in df["Neighborhood"].unique().tolist():
-        # we change it to the same string in lower case
-        mapper[neighborhood] = neighborhood.lower()
-        # special cases
-        if neighborhood.lower() == "delridge neighborhoods":
-            mapper[neighborhood] = "delridge"
-    print(mapper)
-    for old_neighborhood in mapper.keys():
-        replace_value_for_a_feature(df, "Neighborhood", old_neighborhood, mapper[old_neighborhood])
-
-    return df
+    print("After :", data_frame.shape)
+    return data_frame
 
 
 property_use_types_columns = ['SecondLargestPropertyUseType',

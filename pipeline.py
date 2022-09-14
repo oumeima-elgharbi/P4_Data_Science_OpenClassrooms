@@ -53,6 +53,22 @@ def pipeline_1():
     # Suppression des lignes contenant des NA
     df_clean.dropna(inplace=True)
 
+    def replace_value_for_a_feature(data_frame, feature, old_value, new_value):
+        """
+
+        :param data_frame:
+        :param feature:
+        :param old_value:
+        :param new_value:
+        :return:
+        """
+        # Applying the condition
+        data_frame.loc[data_frame[feature] == old_value, feature] = new_value
+
+
+    replace_value_for_a_feature(df_clean, "NumberofBuildings", 0, 1)
+
+
     # Valeurs manquantes restantes
     print(
         "Après nettoyage des valeurs manquantes, le fichier comporte {} lignes et {} colonnes".format(df_clean.shape[0],
@@ -108,6 +124,11 @@ def pipeline_1():
     df_correct['Others(kBtu)'] = df_correct['SiteEnergyUse(kBtu)'] - df_correct['SteamUse(kBtu)'] - df_correct[
         'Electricity(kBtu)'] - df_correct['NaturalGas(kBtu)']
 
+    # 2) we take the absolute value of the difference and round up to the superior unit.
+    df_correct["RemainingEnergy(%)"] = round(
+        abs(df_correct["Others(kBtu)"] / df_correct["SiteEnergyUse(kBtu)"] * 100),
+        1)  # abs adds 5 buildings
+
     print("Shape : 3219, 44", df_correct.shape)
 
     # Suppression des observations avec total énergie qui est significativement inférieur à la somme des composantes
@@ -120,9 +141,11 @@ def pipeline_1():
     # On ne supprime que si le montant inférieur à 0 est significatif par rapport à la consommation totale ==> 36 lignes
     to_drop2 = np.abs(df_correct['Others(kBtu)']) > (0.001 * df_correct['SiteEnergyUse(kBtu)'])
 
+    to_drop3 = np.abs(df_correct["Others(kBtu)"]) > (0.01 * df_correct['SiteEnergyUse(kBtu)'])
+
     # suppression des consommations d'autres énérgie négatives lorsque significatives
     to_drop = to_drop1 & to_drop2
-    df_correct = df_correct[~to_drop]
+    df_correct = df_correct[~to_drop3] ####
 
     # Imputation à 0 des consommations d'autres énérgie négatives lorsque non significatives
     df_correct.loc[df_correct['Others(kBtu)'] < 0, 'Others(kBtu)'] = 0
@@ -138,6 +161,8 @@ def pipeline_1():
     df_correct.loc[df_correct.BuildingType == "Nonresidential wa", "BuildingType"] = "Nonresidential"
     df_correct.loc[df_correct.PrimaryPropertyType == "Restaurant\n", "PrimaryPropertyType"] = "Restaurant"
     df_correct.loc[df_correct.PrimaryPropertyType == "Non-refrigerated warehouse", "PrimaryPropertyType"] = "Warehouse"
+
+    df_correct = mapping_property_use_type(df_correct, property_use_types_columns, usetype_dict)
 
     print("Second part")
     df_explo = df_correct.copy()
@@ -286,68 +311,86 @@ def pipeline_1():
     print("computing time : " + strftime('%H:%M:%S', gmtime(t1 - t0)))
 
 
-def pipeline_2_preprocess():
+property_use_types_columns = ['SecondLargestPropertyUseType',
+                              'LargestPropertyUseType',
+                              'ThirdLargestPropertyUseType',
+                              'PrimaryPropertyType']
+
+usetype_dict = {'Retail Store': 'Retail',
+                'Supermarket/Grocery Store': 'Retail',
+                'Repair Services (Vehicle, Shoe, Locksmith, etc)': 'Retail',
+                'Automobile Dealership': 'Retail',
+                'Convenience Store without Gas Station': 'Retail',
+                'Personal Services': 'Retail',
+                'Enclosed Mall': 'Retail',
+                'Strip Mall': 'Retail',
+                'Wholesale Club/Supercenter': 'Retail',
+                'Other - Mall': 'Retail',
+                'Supermarket / Grocery Stor': 'Retail',
+
+                'Food Sales': 'Leisure',
+                'Restaurant': 'Leisure',
+                'Other - Restaurant/Bar': 'Leisure',
+                'Food Service': 'Leisure',
+                'Worship Facility': 'Leisure',
+                'Other - Recreation': 'Leisure',
+                'Other - Entertainment/Public Assembly': 'Leisure',
+                'Performing Arts': 'Leisure',
+                'Bar/Nightclub': 'Leisure',
+                'Movie Theater': 'Leisure',
+                'Museum': 'Leisure',
+                'Social/Meeting Hall': 'Leisure',
+                'Fitness Center/Health Club/Gym': 'Leisure',
+                'Lifestyle Center ': 'Leisure',
+                'Fast Food Restaurant': 'Leisure',
+
+                'Multifamily Housing': 'Hotel/Senior Care/Housing',
+                'Other - Lodging/Residential': 'Hotel/Senior Care/Housing',
+                'Residence Hall/Dormitory': 'Hotel/Senior Care/Housing',
+                'Hotel': 'Hotel/Senior Care/Housing',
+                'Senior Care Community': 'Hotel/Senior Care/Housing',
+                'Residential Care Facility': 'Hotel/Senior Care/Housing',
+                'High-Rise Multifamily': 'Hotel/Senior Care/Housing',
+
+                'Medical Office': 'Health',
+
+                'Other - Services': 'Office',
+                'Bank Branch': 'Office',
+                'Financial Office': 'Office',
+                'Other - Public Services': 'Office',
+
+                'K-12 School': 'Education',
+                'Other - Education': 'Education',
+                'Vocational School': 'Education',
+                'Adult Education': 'Education',
+                'Pre-school/Daycare': 'Education',
+                'University': 'Education',
+                'College/University': 'Education',
+                'Library': 'Education'
+                }
+
+
+def mapping_property_use_type(data_frame, property_use_types_columns, usetype_dict):
     """
 
+    :param data_frame:
+    :return:
     """
+    data = data_frame.copy()
+    print("Before")
+    print(data[property_use_types_columns].nunique().sort_values())
 
-    ### Chargement des librairies et du fichier# Librairies visualisation
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    from matplotlib.ticker import FormatStrFormatter
+    print("After")
+    for column in property_use_types_columns:
+        data[column] = data[column].replace(usetype_dict)
 
-    # Librairies manipulation de données
-    import pandas as pd
-    import numpy as np
+    print(data[property_use_types_columns].nunique().sort_values())
+    return data
 
-    # Librairies outils machine learning
-    from sklearn.preprocessing import StandardScaler, OneHotEncoder
-    from sklearn.model_selection import train_test_split
-
-    # Divers
-    from time import time, strftime, gmtime
-    import pickle
-
-    # Affichage des colonnes max
-    pd.options.display.max_columns = 60
-
-    # Heure démarrage
-    t0 = time()
-
-    # seed pour les générateurs aléatoires
-    random_state = 1
-
-    # Chargement des données nettoyées
-    df_init = pd.read_csv(
-        r'C:\Users\oumei\Documents\OC_projets\P4\P4_Data_Science_OpenClassrooms\dataset\output\data_cleaned.csv',
-        encoding='utf-8')
-    display(df_init)
-    print("Here :", df_init.shape)
-
-    # Copie du dataframe
-    df = df_init.copy()
-
-    # Création des ratios
-    df['Steam_ratio'] = df['SteamUse(kBtu)'] / df['Total_energy']
-    df['Electricity_ratio'] = df['Electricity(kBtu)'] / df['Total_energy']
-    df['NaturalGas_ratio'] = df['NaturalGas(kBtu)'] / df['Total_energy']
-    df['Others_ratio'] = df['Others(kBtu)'] / df['Total_energy']
-
-    # Suppression des consommations selon source qui ne sont plus utiles
-    df = df.drop(['SteamUse(kBtu)', 'Electricity(kBtu)', 'NaturalGas(kBtu)', 'Others(kBtu)'], axis=1)
-
-    # liste des variables et étiquettes
-    model_CO2_target = ['TotalGHGEmissions']
-    model_CO2_features = ['Steam_ratio', 'Electricity_ratio', 'NaturalGas_ratio', 'Others_ratio', 'Total_energy']
-    model_CO2 = model_CO2_features + model_CO2_target
-
-    # l'ENERGYSTARSscore se sera pas utilisé dans les modélisations, il sera évalué à part
-    # En raison des données manquantes, on le retire avant de générer les données de test et d'entraînement
-    df_models = df.drop(['ENERGYSTARScore'], axis=1).copy()
 
 
 if __name__ == '__main__':
     print("Notebook 1")
     pipeline_1()
-    print("Notebook 2")
-    pipeline_2_preprocess()
+
+#%%
