@@ -7,6 +7,7 @@ import seaborn as sns
 from time import time, strftime, gmtime
 
 import warnings
+
 warnings.filterwarnings(action="ignore")
 
 input_path = "./dataset/source/"
@@ -70,7 +71,7 @@ def dropping_non_relevant_columns(df):
 
     columns_to_drop = ["DataYear", "PropertyName", "ListOfAllPropertyUseTypes", "Address", "City", "State",
                        "TaxParcelIdentificationNumber", "YearsENERGYSTARCertified", "DefaultData",
-                       "Comments", "Latitude", "Longitude"]
+                       "Comments", "Latitude", "Longitude", "Outlier"]
     print("These are the columns to remove :", columns_to_drop)
 
     data_frame = data_frame.drop(columns=columns_to_drop)
@@ -155,19 +156,21 @@ def filling_property_use_type(df):
     return data_frame
 
 
-def dropping_missing_values(df):
-    """
-    Step 3)
-    :param df: (DataFrame)
 
+
+def drop_buildings_subset_nan(df, features_to_check):
+    """
+
+    :param data_frame:
+    :param features_to_check:
+    :return:
     """
     print("___Dropping buildings with missing values___")
     data_frame = df.copy()
     print("Before :", data_frame.shape)
 
+    data_frame = data_frame.dropna(subset=features_to_check)
     # Deleting rows containing NaN
-    data_frame = data_frame.dropna()  # data_frame.dropna(inplace=True)
-
     print("After cleaning missing values, the file contains {} rows et {} columns.".format(data_frame.shape[0],
                                                                                            data_frame.shape[1]))
     print("Remaining missing values : " + str(data_frame.isnull().sum().sum()))
@@ -264,16 +267,33 @@ def keep_compliant(df):
     # On ne garde que les observations avec le status "Compliant" (conforme)
     data_frame = data_frame[data_frame['ComplianceStatus'] == 'Compliant']
 
-    print("We delete the columns ComplianceStatus and Outlier.")
-    data_frame = drop_selected_features(data_frame, ["ComplianceStatus", "Outlier"])
+    print("We delete the columns ComplianceStatus.")
+    data_frame = drop_selected_features(data_frame, ["ComplianceStatus"])
 
     print("After :", data_frame.shape)
     return data_frame
 
 
+def verify_PropertyGFA(data_frame):
+    """
+
+    :param data_frame:
+    :return:
+
+    :UC: 100% filled df[["PropertyGFATotal", "PropertyGFABuilding(s)", "PropertyGFAParking"]]
+    """
+    print("___Verifying propertyGFATotal___")
+    df = data_frame.copy()
+    df = df[["PropertyGFATotal", "PropertyGFABuilding(s)", "PropertyGFAParking"]]
+    for index, row in df.iterrows():
+        if row["PropertyGFATotal"] != row["PropertyGFABuilding(s)"] + row["PropertyGFAParking"]:
+            print("HERE : ", index, row)
+    print("End of checking.")
+
+
 def compute_total_energy(df):
     """
-    8*****
+    8***** CORRECT
     """
     print("___Computing Total Energy___")
     data_frame = df.copy()
@@ -305,16 +325,16 @@ def compute_total_energy(df):
     to_drop3 = np.abs(data_frame["RemainingEnergy(kBtu)"]) > (0.01 * data_frame['SiteEnergyUse(kBtu)'])
     print(to_drop3)
 
-
-# suppression des consommations d'autres énérgie négatives lorsque significatives ==> 5 buildings
+    # suppression des consommations d'autres énérgie négatives lorsque significatives ==> 5 buildings
     to_drop = to_drop1 & to_drop2
     data_frame = data_frame[~to_drop3]
 
     # Imputation à 0 des consommations d'autres énérgie négatives lorsque non significatives
-    data_frame.loc[data_frame["RemainingEnergy(kBtu)"] < 0, "RemainingEnergy(kBtu)"] = 0
+    #data_frame.loc[data_frame["RemainingEnergy(kBtu)"] < 0, "RemainingEnergy(kBtu)"] = 0
 
     # Renomme la variable de consommation totale d'énergie
     data_frame = data_frame.rename(columns={"SiteEnergyUse(kBtu)": "TotalEnergy(kBtu)"})
+    data_frame = data_frame.drop(columns=["RemainingEnergy(kBtu)", "RemainingEnergy(%)"])
 
     print("After :", data_frame.shape)
     return data_frame
@@ -330,40 +350,7 @@ def save_dataset_csv(data_frame, path):
     data_frame.to_csv(path, index=False)
 
 
-def cleaning_pipeline():
-    """
-
-    """
-    print("_____Starting cleaning pipeline_____")
-    raw_dataset = load_data(raw_dataset_file)
-
-    data_v1 = input_zipcode(raw_dataset)  # here because inputting needs all buildings
-    data_v2 = dropping_non_relevant_columns(data_v1)
-    display_countplot(data_v2, feature="ComplianceStatus")
-    data_v3 = keep_compliant(data_v2)
-    data_v4 = filling_property_use_type(data_v3)
-
-    # data_v4 = dropping_missing_values(data_v3)
-    features_with_nan = data_v4.columns.tolist()
-    features_with_nan.remove("ENERGYSTARScore")
-    print(features_with_nan)
-    data_v5 = drop_buildings_subset_nan(data_v4, features_with_nan)
-
-    data_v6 = convert_type_and_map(data_v5)
-    data_v7 = dropping_negative_values(data_v6)  # removes one building
-
-    verify_PropertyGFA(data_v7)
-    # data_v8 = input_propertyGFATotal(data_v7)
-
-    data_v8 = compute_total_energy(data_v7)
-
-    # data_v8 = transforming_building_type(data_v7)
-
-    save_dataset_csv(data_v8, cleaned_dataset_file)
-    print("_____End of cleaning pipeline_____")
-
-
-# Verification functions :
+# functions :
 
 
 def replace_value_for_a_feature(data_frame, feature, old_value, new_value):
@@ -390,133 +377,75 @@ def drop_selected_features(data_frame, list_features_to_drop):
     return df
 
 
-def verify_PropertyGFA(data_frame):
+def cleaning_pipeline():
     """
 
-    :param data_frame:
-    :return:
-
-    :UC: 100% filled df[["PropertyGFATotal", "PropertyGFABuilding(s)", "PropertyGFAParking"]]
     """
-    df = data_frame.copy()
-    df = df[["PropertyGFATotal", "PropertyGFABuilding(s)", "PropertyGFAParking"]]
-    for index, row in df.iterrows():
-        if row["PropertyGFATotal"] != row["PropertyGFABuilding(s)"] + row["PropertyGFAParking"]:
-            print("HERE : ", index, row)
-    print("End of checking.")
+    print("_____Starting cleaning pipeline_____")
+    raw_dataset = load_data(raw_dataset_file)
+
+    #data_v1 = input_zipcode(raw_dataset)  # here because inputting needs all buildings
+    data_v2 = dropping_non_relevant_columns(raw_dataset)
+
+    #data_v5 = test(data_v2)
+    #'''
+
+    display_countplot(data_v2, feature="ComplianceStatus") ###
+    data_v3 = keep_compliant(data_v2) ##
+    data_v4 = filling_property_use_type(data_v3) ###
+
+    # data_v4 = dropping_missing_values(data_v3)
+    features_with_nan = data_v4.columns.tolist()
+    features_with_nan.remove("ENERGYSTARScore")
+    print(features_with_nan)
+    data_v5 = drop_buildings_subset_nan(data_v4, features_with_nan)
+    display_barplot_na(data_v5)
+   # '''
+
+    data_v6 = convert_type_and_map(data_v5)
+    data_v7 = dropping_negative_values(data_v6)  # removes one building
+
+    verify_PropertyGFA(data_v7)
+    # data_v8 = input_propertyGFATotal(data_v7)
+
+    data_v8 = compute_total_energy(data_v7)
+
+    # data_v8 = transforming_building_type(data_v7)
+    data_v8.loc[data_v8.BuildingType == "Nonresidential wa", "BuildingType"] = "Nonresidential"
+
+    print(data_v8.info())
+    save_dataset_csv(data_v8, cleaned_dataset_file)
+    print("_____End of cleaning pipeline_____")
 
 
-def removing_outliers(data_frame, feature, ceiling, less_than_or_equal=True):
-    """
+def test(df):
+    # Imputation des valeurs manquantes
+    display_barplot_na(df)
+    df_clean = df.copy()
 
-    :param data_frame:
-    :param energy_feature:
-    :return:
-    """
-    if less_than_or_equal:
-        df = data_frame[data_frame[feature] <= ceiling]
-    else:
-        df = data_frame[data_frame[feature] >= ceiling]
-    return df
+    # Colonnes à ne pas garder, trop de données manquantes et indépendantes de la problématique
+    to_drop = ['ENERGYSTARScore']
+    df_clean = df_clean.drop(to_drop, axis=1).copy()
 
+    # Imputation des valeurs manquantes pour la construction secondaire (parking par défaut)
+    filtre = df_clean['PropertyGFAParking'] > 0
+    df_clean.loc[filtre, 'SecondLargestPropertyUseType'].fillna('Parking', inplace=True)
+    df_clean.loc[filtre, 'SecondLargestPropertyUseTypeGFA'].fillna(df_clean.loc[filtre, 'PropertyGFAParking'],
+                                                                   inplace=True)
 
-def drop_buildings_subset_nan(df, features_to_check):
-    """
+    df_clean['SecondLargestPropertyUseType'].fillna('No use', inplace=True)
+    df_clean['SecondLargestPropertyUseTypeGFA'].fillna(0, inplace=True)
 
-    :param data_frame:
-    :param features_to_check:
-    :return:
-    """
-    print("___Dropping buildings with missing values___")
-    data_frame = df.copy()
-    print("Before :", data_frame.shape)
+    # Imputation des valeurs manquantes pour la construction tertiaire
+    df_clean['ThirdLargestPropertyUseType'].fillna('No use', inplace=True)
+    df_clean['ThirdLargestPropertyUseTypeGFA'].fillna(0, inplace=True)
 
-    data_frame = data_frame.dropna(subset=features_to_check)
-    # Deleting rows containing NaN
-    print("After cleaning missing values, the file contains {} rows et {} columns.".format(data_frame.shape[0],
-                                                                                           data_frame.shape[1]))
-    print("Remaining missing values : " + str(data_frame.isnull().sum().sum()))
+    display_barplot_na(df_clean)
+    # Suppression des lignes contenant des NA
+    df_clean.dropna(inplace=True)
 
-    print("After :", data_frame.shape)
-    return data_frame
-
-
-property_use_types_columns = ['SecondLargestPropertyUseType',
-                              'LargestPropertyUseType',
-                              'ThirdLargestPropertyUseType',
-                              'PrimaryPropertyType']
-
-usetype_dict = {'Retail Store': 'Retail',
-                'Supermarket/Grocery Store': 'Retail',
-                'Repair Services (Vehicle, Shoe, Locksmith, etc)': 'Retail',
-                'Automobile Dealership': 'Retail',
-                'Convenience Store without Gas Station': 'Retail',
-                'Personal Services': 'Retail',
-                'Enclosed Mall': 'Retail',
-                'Strip Mall': 'Retail',
-                'Wholesale Club/Supercenter': 'Retail',
-                'Other - Mall': 'Retail',
-                'Supermarket / Grocery Stor': 'Retail',
-
-                'Food Sales': 'Leisure',
-                'Restaurant': 'Leisure',
-                'Other - Restaurant/Bar': 'Leisure',
-                'Food Service': 'Leisure',
-                'Worship Facility': 'Leisure',
-                'Other - Recreation': 'Leisure',
-                'Other - Entertainment/Public Assembly': 'Leisure',
-                'Performing Arts': 'Leisure',
-                'Bar/Nightclub': 'Leisure',
-                'Movie Theater': 'Leisure',
-                'Museum': 'Leisure',
-                'Social/Meeting Hall': 'Leisure',
-                'Fitness Center/Health Club/Gym': 'Leisure',
-                'Lifestyle Center ': 'Leisure',
-                'Fast Food Restaurant': 'Leisure',
-
-                'Multifamily Housing': 'Hotel/Senior Care/Housing',
-                'Other - Lodging/Residential': 'Hotel/Senior Care/Housing',
-                'Residence Hall/Dormitory': 'Hotel/Senior Care/Housing',
-                'Hotel': 'Hotel/Senior Care/Housing',
-                'Senior Care Community': 'Hotel/Senior Care/Housing',
-                'Residential Care Facility': 'Hotel/Senior Care/Housing',
-                'High-Rise Multifamily': 'Hotel/Senior Care/Housing',
-
-                'Medical Office': 'Health',
-
-                'Other - Services': 'Office',
-                'Bank Branch': 'Office',
-                'Financial Office': 'Office',
-                'Other - Public Services': 'Office',
-
-                'K-12 School': 'Education',
-                'Other - Education': 'Education',
-                'Vocational School': 'Education',
-                'Adult Education': 'Education',
-                'Pre-school/Daycare': 'Education',
-                'University': 'Education',
-                'College/University': 'Education',
-                'Library': 'Education'
-                }
-
-
-def mapping_property_use_type(data_frame, property_use_types_columns, usetype_dict):
-    """
-
-    :param data_frame:
-    :return:
-    """
-    data = data_frame.copy()
-    print("Before")
-    print(data[property_use_types_columns].nunique().sort_values())
-
-    print("After")
-    for column in property_use_types_columns:
-        data[column] = data[column].replace(usetype_dict)
-
-    print(data[property_use_types_columns].nunique().sort_values())
-    return data
-
+    df_types = df_clean.join(df['ENERGYSTARScore'])
+    return df_types
 
 if __name__ == '__main__':
     # Starting time

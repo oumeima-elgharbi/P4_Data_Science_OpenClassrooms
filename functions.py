@@ -1,5 +1,35 @@
 #from cleaning import *
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+import warnings
+
+warnings.filterwarnings(action="ignore")
+
+
+def display_distribution_per_feature(data_frame, all_features, nb_bins):
+    """
+
+    :param data_frame:
+    :param all_features:
+    :param nb_bins:
+    :return:
+    """
+    for column in all_features:
+        plt.figure(figsize=(12, 6))
+        plt.title('Distribution of : ' + column)
+        sns.histplot(data_frame[column], bins=nb_bins)
+
+
+# Description du dataframe
+def extrems(df):
+    """
+    Input : dataframe
+    output : description du dataframe
+    """
+    return df.describe().loc[['min', '25%', '50%', '75%', 'max'], :]
+
 def assign_type_column(data_frame, columns, new_type):
     """
 
@@ -185,6 +215,26 @@ def fill_nan_column_by_value(data_frame, column, value):
     df[column] = df[column].fillna(value)
     return df
 
+def dropping_missing_values(df):
+    """
+    Step 3)
+    :param df: (DataFrame)
+
+    """
+    print("___Dropping buildings with missing values___")
+    data_frame = df.copy()
+    print("Before :", data_frame.shape)
+
+    # Deleting rows containing NaN
+    data_frame = data_frame.dropna()  # data_frame.dropna(inplace=True)
+
+    print("After cleaning missing values, the file contains {} rows et {} columns.".format(data_frame.shape[0],
+                                                                                           data_frame.shape[1]))
+    print("Remaining missing values : " + str(data_frame.isnull().sum().sum()))
+
+    print("After :", data_frame.shape)
+    return data_frame
+
 
 def compute_TotalEnergy(data_frame):
     """
@@ -202,6 +252,97 @@ def compute_TotalEnergy(data_frame):
     df["RemainingEnergy(%)"] = round(abs(df["RemainingEnergy(kBtu)"] / df["SiteEnergyUse(kBtu)"] * 100),
                                      1)  # abs adds 5 buildings
 
+    return df
+
+
+
+property_use_types_columns = ['SecondLargestPropertyUseType',
+                              'LargestPropertyUseType',
+                              'ThirdLargestPropertyUseType',
+                              'PrimaryPropertyType']
+
+usetype_dict = {'Retail Store': 'Retail',
+                'Supermarket/Grocery Store': 'Retail',
+                'Repair Services (Vehicle, Shoe, Locksmith, etc)': 'Retail',
+                'Automobile Dealership': 'Retail',
+                'Convenience Store without Gas Station': 'Retail',
+                'Personal Services': 'Retail',
+                'Enclosed Mall': 'Retail',
+                'Strip Mall': 'Retail',
+                'Wholesale Club/Supercenter': 'Retail',
+                'Other - Mall': 'Retail',
+                'Supermarket / Grocery Stor': 'Retail',
+
+                'Food Sales': 'Leisure',
+                'Restaurant': 'Leisure',
+                'Other - Restaurant/Bar': 'Leisure',
+                'Food Service': 'Leisure',
+                'Worship Facility': 'Leisure',
+                'Other - Recreation': 'Leisure',
+                'Other - Entertainment/Public Assembly': 'Leisure',
+                'Performing Arts': 'Leisure',
+                'Bar/Nightclub': 'Leisure',
+                'Movie Theater': 'Leisure',
+                'Museum': 'Leisure',
+                'Social/Meeting Hall': 'Leisure',
+                'Fitness Center/Health Club/Gym': 'Leisure',
+                'Lifestyle Center ': 'Leisure',
+                'Fast Food Restaurant': 'Leisure',
+
+                'Multifamily Housing': 'Hotel/Senior Care/Housing',
+                'Other - Lodging/Residential': 'Hotel/Senior Care/Housing',
+                'Residence Hall/Dormitory': 'Hotel/Senior Care/Housing',
+                'Hotel': 'Hotel/Senior Care/Housing',
+                'Senior Care Community': 'Hotel/Senior Care/Housing',
+                'Residential Care Facility': 'Hotel/Senior Care/Housing',
+                'High-Rise Multifamily': 'Hotel/Senior Care/Housing',
+
+                'Medical Office': 'Health',
+
+                'Other - Services': 'Office',
+                'Bank Branch': 'Office',
+                'Financial Office': 'Office',
+                'Other - Public Services': 'Office',
+
+                'K-12 School': 'Education',
+                'Other - Education': 'Education',
+                'Vocational School': 'Education',
+                'Adult Education': 'Education',
+                'Pre-school/Daycare': 'Education',
+                'University': 'Education',
+                'College/University': 'Education',
+                'Library': 'Education'
+                }
+
+
+def mapping_property_use_type(data_frame, property_use_types_columns, usetype_dict):
+    """
+
+    :param data_frame:
+    :return:
+    """
+    data = data_frame.copy()
+    print("Before")
+    print(data[property_use_types_columns].nunique().sort_values())
+
+    print("After")
+    for column in property_use_types_columns:
+        data[column] = data[column].replace(usetype_dict)
+
+    print(data[property_use_types_columns].nunique().sort_values())
+    return data
+
+def removing_outliers(data_frame, feature, ceiling, less_than_or_equal=True):
+    """
+
+    :param data_frame:
+    :param energy_feature:
+    :return:
+    """
+    if less_than_or_equal:
+        df = data_frame[data_frame[feature] <= ceiling]
+    else:
+        df = data_frame[data_frame[feature] >= ceiling]
     return df
 
 # Cleaning pipeline
