@@ -308,6 +308,16 @@ def exploration_pipeline():
 
     data_v3 = data_v2[prediction_features + target_features]
 
+    # type float64 pour toutes les variables numériques
+    #numeric_col = data_v3.select_dtypes(include='number').columns
+    #data_v3[numeric_col] = data_v3[numeric_col].astype(np.float64)
+    #cols = ['YearBuilt', 'Log-NumberofBuildings', 'Log-NumberofFloors', 'Log-PropertyGFATotal', 'Log-PropertyGFAParking', 'Log-SecondLargestPropertyUseTypeGFA', 'Log-ThirdLargestPropertyUseTypeGFA', 'Log-TotalEnergy(kBtu)', 'Log-SteamUse(kBtu)', 'Log-Electricity(kBtu)', 'Log-NaturalGas(kBtu)', 'Log-TotalGHGEmissions', 'ENERGYSTARScore', 'BuildingType', 'PrimaryPropertyType', 'Neighborhood']
+    #data_v3 = data_v3[cols]
+
+    #data_v3 = data_v3.sort_values(by=["YearBuilt", "Log-Electricity(kBtu)", "Log-TotalEnergy(kBtu)"])
+    data_v3 = data_v3.reset_index(drop=True)
+
+
     print("HERE : ", data_v3.shape)
     save_dataset_csv(data_v3, output_dataset_file)
     print("_____End of exploration pipeline_____")

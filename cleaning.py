@@ -308,7 +308,7 @@ def compute_total_energy(df):
         abs(data_frame["RemainingEnergy(kBtu)"] / data_frame["SiteEnergyUse(kBtu)"] * 100),
         1)  # abs adds 5 buildings
 
-    data_frame = data_frame.sort_values(by="RemainingEnergy(%)", ascending=False)
+    #data_frame = data_frame.sort_values(by="RemainingEnergy(%)", ascending=False)
     print(data_frame)
     print("Shape :", data_frame.shape)
 
@@ -455,3 +455,5 @@ if __name__ == '__main__':
     t1 = time()
     print("computing time : {:8.6f} sec".format(t1 - t0))
     print("computing time : " + strftime('%H:%M:%S', gmtime(t1 - t0)))
+
+#%%
