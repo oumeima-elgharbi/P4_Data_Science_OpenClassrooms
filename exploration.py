@@ -13,10 +13,10 @@ import warnings
 warnings.filterwarnings(action="ignore")
 
 input_path = "./dataset/cleaned/"
-input_filename = "data_2016_tryout_1.csv"
+input_filename = "data_cleaned.csv"
 
 output_path = "./dataset/cleaned/"
-output_filename = "data_2016_tryout_2.csv"
+output_filename = "data_exploration.csv"
 
 # Set file name
 input_dataset_file = "{}{}".format(input_path, input_filename)

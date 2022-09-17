@@ -14,7 +14,7 @@ input_path = "./dataset/source/"
 input_filename = "2016_Building_Energy_Benchmarking.csv"
 
 output_path = "./dataset/cleaned/"
-output_filename = "data_2016_tryout_1.csv"
+output_filename = "data_cleaned.csv"
 
 # Set file name
 raw_dataset_file = "{}{}".format(input_path, input_filename)
