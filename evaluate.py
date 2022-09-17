@@ -10,6 +10,9 @@ pd.set_option('display.float_format', lambda x: '%.5f' % x)
 global results
 results = pd.DataFrame({})
 
+global results_cv
+results_cv = pd.DataFrame({})
+
 
 def evaluate_regression(model_name, result, y_test, y_pred):
     """
@@ -52,6 +55,20 @@ def evaluate_regression(model_name, result, y_test, y_pred):
     return result
 
 
+def summary_results_CV(model_name, mean_cv_score, result_cv):
+    """
+    Mean cross-validated score of the best_estimator
+    """
+    print("Results Cross-Validated")
+    result_cv = pd.concat([result_cv, pd.DataFrame({"Model": [model_name],
+                                                    "Mean CV R²": [mean_cv_score]})])
+
+    result_cv = result_cv.sort_values(by=["Mean CV R²"], ascending=False)
+    display(result_cv)
+
+    return result_cv
+
+
 def display_barplot_errors(results, baseline_model, title, metric):
     """
 
@@ -83,7 +100,6 @@ def display_prediction(y_test, y_pred):
         [k[1] for k in keys],  # valeur predite (ordonnee)
         s=[sizes[k] for k in keys],  # taille du marqueur
         color='coral', alpha=0.8)
-
 
 
 if __name__ == '__main__':
