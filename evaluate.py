@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import time
 
 from sklearn.metrics import mean_absolute_error, r2_score, mean_squared_error, median_absolute_error
 
@@ -12,6 +13,9 @@ results = pd.DataFrame({})
 
 global results_cv
 results_cv = pd.DataFrame({})
+
+global prediction_time
+prediction_time = pd.DataFrame({})
 
 
 def evaluate_regression(model_name, result, y_test, y_pred):
@@ -55,7 +59,7 @@ def evaluate_regression(model_name, result, y_test, y_pred):
     return result
 
 
-def summary_results_CV(model_name, mean_cv_score, result_cv):
+def summary_results_cv(model_name, mean_cv_score, result_cv):
     """
     Mean cross-validated score of the best_estimator
     """
@@ -67,6 +71,26 @@ def summary_results_CV(model_name, mean_cv_score, result_cv):
     display(result_cv)
 
     return result_cv
+
+
+def compute_prediction_time(model, model_name, X, df_prediction_time):
+    """
+
+    """
+    # Starting time
+    t0 = time()
+    model.predict(X)
+    t1 = time()
+    pred_time = t1 - t0
+    print("Prediction time : {:8.6f} sec".format(pred_time))
+
+    df_prediction_time = pd.concat([df_prediction_time, pd.DataFrame({"Model name": [model_name],
+                                                                      "Prediction time": [pred_time]
+                                                                      })])
+    df_prediction_time = df_prediction_time.sort_values(by=["Prediction time"], ascending=True)
+
+    # display(df_prediction_time)
+    return df_prediction_time
 
 
 def display_barplot_errors(results, baseline_model, title, metric):
@@ -81,6 +105,19 @@ def display_barplot_errors(results, baseline_model, title, metric):
     baseline_rmse = results[metric][results["Model"] == baseline_model][0]  # we take the value inside
     # Drawing a horizontal line at point 1.25
     graph.axhline(baseline_rmse, color="b")
+
+
+def display_barplot_prediction_time(df_prediction_time):
+    title = "Barplot of prediction time per model"
+    sns.set(rc={'figure.figsize': (14, 10)})
+    plt.title(title)
+    name_model = df_prediction_time["Model name"]
+    graph = sns.barplot(x=name_model,
+                        y=df_prediction_time["Prediction time"])
+
+    min_time = df_prediction_time["Prediction time"].min()  # we take the value inside
+    # Drawing a horizontal line at point 1.25
+    graph.axhline(min_time, color="b")
 
 
 # NOT USED FOR NOW
