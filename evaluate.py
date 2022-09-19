@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import time
+from time import time, strftime, gmtime
 
 from sklearn.metrics import mean_absolute_error, r2_score, mean_squared_error, median_absolute_error
 
