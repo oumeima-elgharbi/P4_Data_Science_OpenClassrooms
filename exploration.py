@@ -23,22 +23,25 @@ input_dataset_file = "{}{}".format(input_path, input_filename)
 output_dataset_file = "{}{}".format(output_path, output_filename)
 
 
-def display_boxplot_per_feature(data_frame, x_all_features, y_category):
+def display_boxplot_per_feature(data_frame, all_features, category):
     """
 
     :param data_frame:
-    :param x_all_features: (list) a list of features to plot (column names, numeric variables)
-    :param y_category: (string) category to make different plots
+    :param all_features: (list) a list of features to plot (column names, numeric variables)
+    :param category: (string) category to make different plots
     :return:
     """
     # to make the graphs bigger
     sns.set(rc={'figure.figsize': (12, 6)})
-    for i, feature in enumerate(x_all_features):
+
+    for i, feature in enumerate(all_features):
+    # liste triée des zones selon médiane des valeurs
+        order = data_frame.groupby(category)[feature].median().sort_values(ascending=False).index
         plt.figure(i)
-        sns.boxplot(data=data_frame, x=feature, y=y_category)
+        sns.boxplot(data=data_frame, x=feature, y=category, order=order)
 
 
-def box_categorical(df, col_categorical = "PrimaryPropertyType", col_numeric="TotalGHGEmissions"):
+def box_categorical(df, col_categorical, col_numeric):
     """
     Input : dataframe, colonne d'une variable qualitative, colonne d'une variable quantitative
     output : boxplot de la variable quantitative en fonction de la variable qualitative
@@ -50,7 +53,7 @@ def box_categorical(df, col_categorical = "PrimaryPropertyType", col_numeric="To
     order = df.groupby(col_categorical)[col_numeric].median().sort_values(ascending=False).index
 
     # Graphique
-    fig,ax = plt.subplots(figsize=(xsize,4))
+    fig, ax = plt.subplots(figsize=(xsize,4))
     bp = sns.boxplot(x=col_categorical, y=col_numeric, data=df, order=order, showfliers=False)
     bp.set_xticklabels(bp.get_xticklabels(), rotation=45)
     bp.set_title(col_categorical)
@@ -261,7 +264,6 @@ def exploration_pipeline():
     print("_____Starting exploration pipeline_____")
     cleaned_data = load_data_types(input_dataset_file, columns_to_categorize)
 
-
     print("___Correlation matrix___")
     correlation_matrix(cleaned_data)
     data_v1 = delete_correlated_variables(cleaned_data)
@@ -270,22 +272,22 @@ def exploration_pipeline():
 
 
     print("___Boxplot categorical features / target___")
-    target = ["TotalGHGEmissions", "TotalEnergy(kBtu)", "Electricity(kBtu)", "NaturalGas(kBtu)", "SteamUse(kBtu)"]
+    #features_to_predict = ["TotalGHGEmissions", "TotalEnergy(kBtu)", "Electricity(kBtu)", "NaturalGas(kBtu)", "SteamUse(kBtu)"]
 
-    #display_boxplot_per_feature(data_v1, x_all_features=target, y_category="BuildingType")
     # Variable BuildingType / émission CO2
     box_categorical(data_v1, "BuildingType")
+    #display_boxplot_per_feature(data_v1, all_features=features_to_predict, category="BuildingType")
 
-    #display_boxplot_per_feature(data_v1, x_all_features=target, y_category="PrimaryPropertyType")
     # Variable PrimaryPropertyType" / émission CO2
     box_categorical(data_v1, "PrimaryPropertyType")
+    #display_boxplot_per_feature(data_v1, all_features=features_to_predict, category="PrimaryPropertyType")
 
-    #display_boxplot_per_feature(data_v1, x_all_features=target, y_category="Neighborhood")
     # Variable Neighborhood / émission CO2
     box_categorical(data_v1, "Neighborhood")
+    #display_boxplot_per_feature(data_v1, all_features=features_to_predict, category="Neighborhood")
+
 
     data_v2 = log_transformation_based_on_skewness(data_v1)
-
 
     print("___Keeping only relevant features___") # "CouncilDistrictCode",
     prediction_features = ["Neighborhood", "BuildingType", "PrimaryPropertyType", "ENERGYSTARScore",
@@ -308,17 +310,9 @@ def exploration_pipeline():
 
     data_v3 = data_v2[prediction_features + target_features]
 
-    # type float64 pour toutes les variables numériques
-    #numeric_col = data_v3.select_dtypes(include='number').columns
-    #data_v3[numeric_col] = data_v3[numeric_col].astype(np.float64)
-    #cols = ['YearBuilt', 'Log-NumberofBuildings', 'Log-NumberofFloors', 'Log-PropertyGFATotal', 'Log-PropertyGFAParking', 'Log-SecondLargestPropertyUseTypeGFA', 'Log-ThirdLargestPropertyUseTypeGFA', 'Log-TotalEnergy(kBtu)', 'Log-SteamUse(kBtu)', 'Log-Electricity(kBtu)', 'Log-NaturalGas(kBtu)', 'Log-TotalGHGEmissions', 'ENERGYSTARScore', 'BuildingType', 'PrimaryPropertyType', 'Neighborhood']
-    #data_v3 = data_v3[cols]
 
-    #data_v3 = data_v3.sort_values(by=["YearBuilt", "Log-Electricity(kBtu)", "Log-TotalEnergy(kBtu)"])
-    data_v3 = data_v3.reset_index(drop=True)
-
-
-    print("HERE : ", data_v3.shape)
+    print("Final shape of cleaned dataset before feature engineering : ", data_v3.shape)
+    data_v3 = data_v3.reset_index(drop=True) #####
     save_dataset_csv(data_v3, output_dataset_file)
     print("_____End of exploration pipeline_____")
 
