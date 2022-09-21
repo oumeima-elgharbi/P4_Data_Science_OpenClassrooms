@@ -21,11 +21,11 @@ raw_dataset_file = "{}{}".format(input_path, input_filename)
 cleaned_dataset_file = "{}{}".format(output_path, output_filename)
 
 
-def display_barplot_na(df):
+def display_barplot_na(df, number_features):
     """
 
     """
-    data_nan = df.isna().sum().sort_values(ascending=False).head(10)
+    data_nan = df.isna().sum().sort_values(ascending=False).head(number_features)
     plt.figure(figsize=(10, 8))
     plt.title('Proportion of NaN per feature (%)')
     sns.barplot(x=(100 * data_nan.values / df.shape[0]), y=data_nan.index)
@@ -80,50 +80,6 @@ def dropping_non_relevant_columns(df):
     return data_frame
 
 
-def input_zipcode(df):
-    """
-    :UC: the dataframe must be raw
-    """
-    columns = df.columns.tolist()
-    assert "Address" in columns and "ZipCode" in columns, "You need Address and ZipCode."
-
-    print("___Inputting missing ZipCode___")
-    data_frame = df.copy()
-    print("Before :", data_frame.shape)
-
-    all_zipcode = data_frame["ZipCode"].unique().tolist()
-    print("We have :", len(all_zipcode), "unique zipcodes.")
-
-    # DataFrame with 16 missing ZipCodes
-    zipcode_na_df = data_frame[data_frame["ZipCode"].isna()]
-    print("We have :", zipcode_na_df.shape[0], "missing ZipCodes.")
-
-    # We make a list with the address of the building for which the ZipCode is missing.
-    zipcode_na_list_address = zipcode_na_df["Address"].tolist()
-    zipcode_na_list = [[i, ""] for i in zipcode_na_list_address]
-
-    # This is the list of zipcodes for each of the 16 missing zipcode. We found it on searching on internet using the Address
-    correct_zipcode = [98125, 98144, 98117, 98125, 98107, 98117, 98119, 98112, 98122, 98118, 98126, 98108, 98104, 98119,
-                       98108, 98108]
-    # print(len(right_zipcode))
-
-    for i, zipcode in enumerate(correct_zipcode):
-        zipcode_na_list[i][1] = zipcode
-    # print(zipcode_na_list)
-
-    print("We replace the missing ZipCodes by their correct value.")
-    # zipcode_na_df.index
-    # We iterate on the index of the buildings for which the ZipCode is missing
-    for i, index in enumerate(zipcode_na_df.index):
-        data_frame.at[index, "ZipCode"] = correct_zipcode[i]
-
-    # Verification
-    display(data_frame[data_frame["ZipCode"].isna()])
-    print("We have :", zipcode_na_df.shape[0], "missing ZipCodes.")
-    print("After :", data_frame.shape)
-    return data_frame
-
-
 def filling_property_use_type(df):
     """
     Step 2)
@@ -134,7 +90,7 @@ def filling_property_use_type(df):
     data_frame = df.copy()
     print("Before :", data_frame.shape)
 
-    display_barplot_na(data_frame)
+    display_barplot_na(data_frame, 10)
 
     # Inputting missing values for SecondLargestPropertyUseType (we use Parking as the default type)
     _filter = data_frame['PropertyGFAParking'] > 0
@@ -152,10 +108,8 @@ def filling_property_use_type(df):
     data_frame['ThirdLargestPropertyUseTypeGFA'].fillna(0, inplace=True)
 
     print("After :", data_frame.shape)
-    display_barplot_na(data_frame)
+    display_barplot_na(data_frame, 10)
     return data_frame
-
-
 
 
 def drop_buildings_subset_nan(df, features_to_check):
@@ -174,6 +128,53 @@ def drop_buildings_subset_nan(df, features_to_check):
     print("After cleaning missing values, the file contains {} rows et {} columns.".format(data_frame.shape[0],
                                                                                            data_frame.shape[1]))
     print("Remaining missing values : " + str(data_frame.isnull().sum().sum()))
+
+    print("After :", data_frame.shape)
+    return data_frame
+
+
+def assign_type(df):
+    """
+    Converts datatype
+    """
+    print("___Assigning datatype___")
+    data_frame = df.copy()
+    # Checking datatype for each feature
+    print("Before :", data_frame.dtypes)
+
+    # Qualitative variables => object type
+    col_object = ['OSEBuildingID', 'CouncilDistrictCode', 'ZipCode']
+    for col in col_object:
+        data_frame[col] = data_frame[col].astype('object')
+
+    # Quantitative variables => numerical type
+    col_int = ['NumberofFloors', 'NumberofBuildings']
+    for col in col_int:
+        data_frame[col] = data_frame[col].astype(np.int64)
+
+    # col_float = ['Latitude', 'Longitude']
+    # for col in col_float:
+    #   data_frame[col] = data_frame[col].astype(np.float64)
+
+    print("After :", data_frame.dtypes)
+    return data_frame
+
+
+def capitalize_categorical_variables(df):
+    """
+    maps categorical values
+    """
+    print("___Capitalization standardization___")
+    data_frame = df.copy()
+    # Checking datatype for each feature
+    print("Before :", data_frame.shape)
+
+    # Capitalization standardization
+    cols_non_numeric = data_frame.select_dtypes(exclude='number').columns
+    print("We capitalize these columns :", cols_non_numeric)
+    data_frame[cols_non_numeric] = data_frame[cols_non_numeric].apply(lambda x: x.astype(str).str.capitalize())
+    print("We change delridge neighborhoods to delridge manually.")
+    replace_value_for_a_feature(data_frame, "Neighborhood", "Delridge neighborhoods", "Delridge")
 
     print("After :", data_frame.shape)
     return data_frame
@@ -203,6 +204,7 @@ def convert_type_and_map(df):
     # for col in col_float:
     #    data_frame[col] = data_frame[col].astype(np.float64)
 
+    print("___Capitalization standardization___")
     # Capitalization standardization
     cols_non_numeric = data_frame.select_dtypes(exclude='number').columns
     print("We capitalize these columns :", cols_non_numeric)
@@ -308,8 +310,8 @@ def compute_total_energy(df):
         abs(data_frame["RemainingEnergy(kBtu)"] / data_frame["SiteEnergyUse(kBtu)"] * 100),
         1)  # abs adds 5 buildings
 
-    #data_frame = data_frame.sort_values(by="RemainingEnergy(%)", ascending=False)
-    print(data_frame)
+    # data_frame = data_frame.sort_values(by="RemainingEnergy(%)", ascending=False)
+    display(data_frame)
     print("Shape :", data_frame.shape)
 
     # 3) Suppression des observations avec total énergie qui est significativement inférieur à la somme des composantes
@@ -330,13 +332,29 @@ def compute_total_energy(df):
     data_frame = data_frame[~to_drop3]
 
     # Imputation à 0 des consommations d'autres énérgie négatives lorsque non significatives
-    #data_frame.loc[data_frame["RemainingEnergy(kBtu)"] < 0, "RemainingEnergy(kBtu)"] = 0
+    # data_frame.loc[data_frame["RemainingEnergy(kBtu)"] < 0, "RemainingEnergy(kBtu)"] = 0
 
     # Renomme la variable de consommation totale d'énergie
     data_frame = data_frame.rename(columns={"SiteEnergyUse(kBtu)": "TotalEnergy(kBtu)"})
     data_frame = data_frame.drop(columns=["RemainingEnergy(kBtu)", "RemainingEnergy(%)"])
 
     print("After :", data_frame.shape)
+    return data_frame
+
+
+def transforming_building_type(df):
+    """
+    8
+    """
+    print("___Transforming building type___")
+    data_frame = df.copy()
+    print("Before :", data_frame.shape)
+    print(data_frame["BuildingType"].value_counts())
+
+    data_frame.loc[data_frame.BuildingType == "Nonresidential wa", "BuildingType"] = "Nonresidential"
+
+    print("After :", data_frame.shape)
+    print(data_frame["BuildingType"].value_counts())
     return data_frame
 
 
@@ -384,68 +402,34 @@ def cleaning_pipeline():
     print("_____Starting cleaning pipeline_____")
     raw_dataset = load_data(raw_dataset_file)
 
-    #data_v1 = input_zipcode(raw_dataset)  # here because inputting needs all buildings
-    data_v2 = dropping_non_relevant_columns(raw_dataset)
+    # data_v1 = input_zipcode(raw_dataset)  # here because inputting needs all buildings
+    data_v1 = dropping_non_relevant_columns(raw_dataset)
 
-    #data_v5 = test(data_v2)
-    #'''
-
-    display_countplot(data_v2, feature="ComplianceStatus") ###
-    data_v3 = keep_compliant(data_v2) ##
-    data_v4 = filling_property_use_type(data_v3) ###
+    display_countplot(data_v1, feature="ComplianceStatus")
+    data_v2 = keep_compliant(data_v1)
+    data_v3 = filling_property_use_type(data_v2)
 
     # data_v4 = dropping_missing_values(data_v3)
-    features_with_nan = data_v4.columns.tolist()
-    features_with_nan.remove("ENERGYSTARScore")
-    print(features_with_nan)
-    data_v5 = drop_buildings_subset_nan(data_v4, features_with_nan)
-    display_barplot_na(data_v5)
-   # '''
+    features_without_EnergyStarScore = data_v3.columns.tolist()
+    features_without_EnergyStarScore.remove("ENERGYSTARScore")
+    print(features_without_EnergyStarScore)
+    data_v4 = drop_buildings_subset_nan(data_v3, features_without_EnergyStarScore)
+    display_barplot_na(data_v4, 10)
 
-    data_v6 = convert_type_and_map(data_v5)
-    data_v7 = dropping_negative_values(data_v6)  # removes one building
+    # data_v5 = convert_type_and_map(data_v4)
+    data_v5 = assign_type(data_v4)
+    data_v6 = capitalize_categorical_variables(data_v5)
+    data_v7 = transforming_building_type(data_v6)
 
-    verify_PropertyGFA(data_v7)
-    # data_v8 = input_propertyGFATotal(data_v7)
+    data_v8 = dropping_negative_values(data_v7)  # removes one building
+    verify_PropertyGFA(data_v8)  # data_v8 = input_propertyGFATotal(data_v7)
 
-    data_v8 = compute_total_energy(data_v7)
+    data_v9 = compute_total_energy(data_v8)
 
-    # data_v8 = transforming_building_type(data_v7)
-    data_v8.loc[data_v8.BuildingType == "Nonresidential wa", "BuildingType"] = "Nonresidential"
-
-    print(data_v8.info())
-    save_dataset_csv(data_v8, cleaned_dataset_file)
+    print(data_v9.info())
+    save_dataset_csv(data_v9, cleaned_dataset_file)
     print("_____End of cleaning pipeline_____")
 
-
-def test(df):
-    # Imputation des valeurs manquantes
-    display_barplot_na(df)
-    df_clean = df.copy()
-
-    # Colonnes à ne pas garder, trop de données manquantes et indépendantes de la problématique
-    to_drop = ['ENERGYSTARScore']
-    df_clean = df_clean.drop(to_drop, axis=1).copy()
-
-    # Imputation des valeurs manquantes pour la construction secondaire (parking par défaut)
-    filtre = df_clean['PropertyGFAParking'] > 0
-    df_clean.loc[filtre, 'SecondLargestPropertyUseType'].fillna('Parking', inplace=True)
-    df_clean.loc[filtre, 'SecondLargestPropertyUseTypeGFA'].fillna(df_clean.loc[filtre, 'PropertyGFAParking'],
-                                                                   inplace=True)
-
-    df_clean['SecondLargestPropertyUseType'].fillna('No use', inplace=True)
-    df_clean['SecondLargestPropertyUseTypeGFA'].fillna(0, inplace=True)
-
-    # Imputation des valeurs manquantes pour la construction tertiaire
-    df_clean['ThirdLargestPropertyUseType'].fillna('No use', inplace=True)
-    df_clean['ThirdLargestPropertyUseTypeGFA'].fillna(0, inplace=True)
-
-    display_barplot_na(df_clean)
-    # Suppression des lignes contenant des NA
-    df_clean.dropna(inplace=True)
-
-    df_types = df_clean.join(df['ENERGYSTARScore'])
-    return df_types
 
 if __name__ == '__main__':
     # Starting time
@@ -455,5 +439,3 @@ if __name__ == '__main__':
     t1 = time()
     print("computing time : {:8.6f} sec".format(t1 - t0))
     print("computing time : " + strftime('%H:%M:%S', gmtime(t1 - t0)))
-
-#%%

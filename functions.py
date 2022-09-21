@@ -1,4 +1,4 @@
-#from cleaning import *
+# from cleaning import *
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -30,6 +30,7 @@ def extrems(df):
     """
     return df.describe().loc[['min', '25%', '50%', '75%', 'max'], :]
 
+
 def assign_type_column(data_frame, columns, new_type):
     """
 
@@ -42,6 +43,7 @@ def assign_type_column(data_frame, columns, new_type):
     df = data_frame.copy()
     df[columns] = df[columns].astype(new_type)
     return df
+
 
 def remove_percentile_outliers(data_frame, upper_percentile, lower_percentile, features):
     """
@@ -84,21 +86,46 @@ def drop_selected_features(data_frame, list_features_to_drop):
     return df
 
 
-def transforming_building_type(df):
+def input_zipcode(df):
     """
-    8
+    :UC: the dataframe must be raw
     """
-    print("___Transforming building type and primary property type___")
+    columns = df.columns.tolist()
+    assert "Address" in columns and "ZipCode" in columns, "You need Address and ZipCode."
+
+    print("___Inputting missing ZipCode___")
     data_frame = df.copy()
     print("Before :", data_frame.shape)
 
-    print(data_frame["BuildingType"].value_counts())
-    print(data_frame["PrimaryPropertyType"].value_counts())
+    all_zipcode = data_frame["ZipCode"].unique().tolist()
+    print("We have :", len(all_zipcode), "unique zipcodes.")
 
-    data_frame.loc[data_frame.BuildingType == "Nonresidential wa", "BuildingType"] = "Nonresidential"
-    data_frame.loc[data_frame.PrimaryPropertyType == "Restaurant\n", "PrimaryPropertyType"] = "Restaurant"
-    data_frame.loc[data_frame.PrimaryPropertyType == "Non-refrigerated warehouse", "PrimaryPropertyType"] = "Warehouse"
+    # DataFrame with 16 missing ZipCodes
+    zipcode_na_df = data_frame[data_frame["ZipCode"].isna()]
+    print("We have :", zipcode_na_df.shape[0], "missing ZipCodes.")
 
+    # We make a list with the address of the building for which the ZipCode is missing.
+    zipcode_na_list_address = zipcode_na_df["Address"].tolist()
+    zipcode_na_list = [[i, ""] for i in zipcode_na_list_address]
+
+    # This is the list of zipcodes for each of the 16 missing zipcode. We found it on searching on internet using the Address
+    correct_zipcode = [98125, 98144, 98117, 98125, 98107, 98117, 98119, 98112, 98122, 98118, 98126, 98108, 98104, 98119,
+                       98108, 98108]
+    # print(len(right_zipcode))
+
+    for i, zipcode in enumerate(correct_zipcode):
+        zipcode_na_list[i][1] = zipcode
+    # print(zipcode_na_list)
+
+    print("We replace the missing ZipCodes by their correct value.")
+    # zipcode_na_df.index
+    # We iterate on the index of the buildings for which the ZipCode is missing
+    for i, index in enumerate(zipcode_na_df.index):
+        data_frame.at[index, "ZipCode"] = correct_zipcode[i]
+
+    # Verification
+    display(data_frame[data_frame["ZipCode"].isna()])
+    print("We have :", zipcode_na_df.shape[0], "missing ZipCodes.")
     print("After :", data_frame.shape)
     return data_frame
 
@@ -205,6 +232,7 @@ def verify_min_value(data_frame, all_features, ceiling):
     print("End of checking.")
     return features_with_negative_values
 
+
 def fill_nan_column_by_value(data_frame, column, value):
     """
 
@@ -214,6 +242,7 @@ def fill_nan_column_by_value(data_frame, column, value):
     df = data_frame.copy()
     df[column] = df[column].fillna(value)
     return df
+
 
 def dropping_missing_values(df):
     """
@@ -253,7 +282,6 @@ def compute_TotalEnergy(data_frame):
                                      1)  # abs adds 5 buildings
 
     return df
-
 
 
 property_use_types_columns = ['SecondLargestPropertyUseType',
@@ -332,6 +360,7 @@ def mapping_property_use_type(data_frame, property_use_types_columns, usetype_di
     print(data[property_use_types_columns].nunique().sort_values())
     return data
 
+
 def removing_outliers(data_frame, feature, ceiling, less_than_or_equal=True):
     """
 
@@ -344,6 +373,7 @@ def removing_outliers(data_frame, feature, ceiling, less_than_or_equal=True):
     else:
         df = data_frame[data_frame[feature] >= ceiling]
     return df
+
 
 # Cleaning pipeline
 def preprocess_features(raw_data):
