@@ -221,7 +221,7 @@ def correlation_matrix(df, width=15, height=15):
     sns.heatmap(corr, center=0, cmap=sns.color_palette("RdBu_r", 7), linewidths=1,
                 annot=True, annot_kws={"size": 9}, fmt=".02f")
 
-    plt.title('Correlation matrix', fontsize=18)
+    plt.title('Correlation matrix - Pearson', fontsize=18)
     plt.xticks(fontsize=12, rotation=90)
     plt.yticks(fontsize=12)
     plt.show()
@@ -275,15 +275,15 @@ def exploration_pipeline():
     #features_to_predict = ["TotalGHGEmissions", "TotalEnergy(kBtu)", "Electricity(kBtu)", "NaturalGas(kBtu)", "SteamUse(kBtu)"]
 
     # Variable BuildingType / émission CO2
-    box_categorical(data_v1, "BuildingType")
+    box_categorical(data_v1, col_categorical="BuildingType", col_numeric="TotalGHGEmissions")
     #display_boxplot_per_feature(data_v1, all_features=features_to_predict, category="BuildingType")
 
     # Variable PrimaryPropertyType" / émission CO2
-    box_categorical(data_v1, "PrimaryPropertyType")
+    box_categorical(data_v1, col_categorical="PrimaryPropertyType", col_numeric="TotalGHGEmissions")
     #display_boxplot_per_feature(data_v1, all_features=features_to_predict, category="PrimaryPropertyType")
 
     # Variable Neighborhood / émission CO2
-    box_categorical(data_v1, "Neighborhood")
+    box_categorical(data_v1, col_categorical="Neighborhood", col_numeric="TotalGHGEmissions")
     #display_boxplot_per_feature(data_v1, all_features=features_to_predict, category="Neighborhood")
 
 
@@ -295,12 +295,24 @@ def exploration_pipeline():
                            'Log-NumberofBuildings',
                            'Log-NumberofFloors',
                            'Log-PropertyGFATotal',
-                           'Log-PropertyGFAParking',
+                           'Log-PropertyGFABuilding(s)',
+                           'Log-LargestPropertyUseTypeGFA',
                            'Log-SecondLargestPropertyUseTypeGFA',
-                           'Log-ThirdLargestPropertyUseTypeGFA']
+                           'Log-ThirdLargestPropertyUseTypeGFA'
+                           ] ## total / parking
     # , "LargestPropertyUseType", "SecondLargestPropertyUseType", "ThirdLargestPropertyUseType",
     # 'Log-PropertyGFABuilding(s)', 'Log-LargestPropertyUseTypeGFA',
 
+    """
+    ["Neighborhood", "BuildingType", "PrimaryPropertyType", "ENERGYSTARScore",
+                           "YearBuilt",
+                           'Log-NumberofBuildings',
+                           'Log-NumberofFloors',
+                           'Log-PropertyGFATotal',
+                           'Log-PropertyGFAParking',
+                           'Log-SecondLargestPropertyUseTypeGFA',
+                           'Log-ThirdLargestPropertyUseTypeGFA']
+    """
     target_features = [
      'Log-TotalEnergy(kBtu)',
      'Log-SteamUse(kBtu)',
