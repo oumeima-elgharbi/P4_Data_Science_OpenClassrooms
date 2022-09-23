@@ -46,24 +46,29 @@ def evaluate_regression(model_name, result, y_test, y_pred):
     display(result)
 
     # 2) graph 1
+
     fig = plt.figure(0)
-    fig.suptitle("Scatter plot of the predicted values as a function of the true values ; ln(1+x)", fontsize=12)
+    if y_test.name.startswith('Log'):
+        fig.suptitle("Scatter plot of the predicted values as a function of the true values ; ln(1+x)", fontsize=12)
+    else:
+        fig.suptitle("Scatter plot of the predicted values as a function of the true values", fontsize=12)
     plt.legend("If the prediction was good, we would see a line.")
     plt.xlabel("Real values of {}".format(y_test.name), fontsize=12)
     plt.ylabel("Predicted values of {}".format(y_test.name), fontsize=12)
     plt.scatter(x=y_test, y=y_pred, color='coral')
 
-    # graph 2
-    exp_y_test = np.expm1(y_test)
-    exp_y_pred = np.expm1(y_pred)
+    if y_test.name.startswith('Log'):
+        # graph 2
+        exp_y_test = np.expm1(y_test)
+        exp_y_pred = np.expm1(y_pred)
 
-    fig = plt.figure(1)
-    fig.suptitle("Scatter plot of the predicted values as a function of the true values ; converted with exp(x)-1", fontsize=12)
-    plt.legend("If the prediction was good, we would see a line.")
-    plt.xlabel("Real values", fontsize=12)
-    plt.ylabel("Predicted values", fontsize=12)
-    plt.scatter(x=exp_y_test, y=exp_y_pred, color='green')
-    #fig.savefig('test.jpg')
+        fig = plt.figure(1)
+        fig.suptitle("Scatter plot of the predicted values as a function of the true values ; converted with exp(x)-1", fontsize=12)
+        plt.legend("If the prediction was good, we would see a line.")
+        plt.xlabel("Real values", fontsize=12)
+        plt.ylabel("Predicted values", fontsize=12)
+        plt.scatter(x=exp_y_test, y=exp_y_pred, color='green')
+        #fig.savefig('test.jpg')
 
     # graph 3
     fig = plt.figure(2)
