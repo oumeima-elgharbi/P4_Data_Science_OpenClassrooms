@@ -97,9 +97,9 @@ def compute_log_effect_on_skewness(data_frame, features):
         test_log10 = np.log10(1 + df[feature])
 
         test_df = pd.DataFrame({"feature": [feature],
-                                "ln": [abs(test_ln.skew())],
-                                "log-2": [abs(test_log2.skew())],
-                                "log-10": [abs(test_log10.skew())]})
+                                "ln(1+x)": [abs(test_ln.skew())],
+                                "log-2(1+x)": [abs(test_log2.skew())],
+                                "log-10(1+x)": [abs(test_log10.skew())]})
 
         all_log_transformations = pd.concat([all_log_transformations, test_df])
 
@@ -291,34 +291,27 @@ def exploration_pipeline():
 
     print("___Keeping only relevant features___") # "CouncilDistrictCode",
     prediction_features = ["Neighborhood", "BuildingType", "PrimaryPropertyType", "ENERGYSTARScore",
-                           "YearBuilt",
-                           'Log-NumberofBuildings',
-                           'Log-NumberofFloors',
-                           'Log-PropertyGFATotal',
-                           'Log-PropertyGFABuilding(s)',
-                           'Log-LargestPropertyUseTypeGFA',
-                           'Log-SecondLargestPropertyUseTypeGFA',
-                           'Log-ThirdLargestPropertyUseTypeGFA'
-                           ] ## total / parking
+                       "YearBuilt",
+                       'Log-NumberofFloors',
+                       'Log-PropertyGFATotal',
+                       'Log-PropertyGFABuilding(s)',
+                       'Log-LargestPropertyUseTypeGFA',
+                       'Log-SecondLargestPropertyUseTypeGFA',
+                       'Log-ThirdLargestPropertyUseTypeGFA'] ## total / parking
     # , "LargestPropertyUseType", "SecondLargestPropertyUseType", "ThirdLargestPropertyUseType",
     # 'Log-PropertyGFABuilding(s)', 'Log-LargestPropertyUseTypeGFA',
 
-    """
-    ["Neighborhood", "BuildingType", "PrimaryPropertyType", "ENERGYSTARScore",
-                           "YearBuilt",
-                           'Log-NumberofBuildings',
-                           'Log-NumberofFloors',
-                           'Log-PropertyGFATotal',
-                           'Log-PropertyGFAParking',
-                           'Log-SecondLargestPropertyUseTypeGFA',
-                           'Log-ThirdLargestPropertyUseTypeGFA']
-    """
     target_features = [
-     'Log-TotalEnergy(kBtu)',
-     'Log-SteamUse(kBtu)',
-     'Log-Electricity(kBtu)',
-     'Log-NaturalGas(kBtu)',
-     'Log-TotalGHGEmissions']
+        'Log-TotalEnergy(kBtu)',
+        'Log-SteamUse(kBtu)',
+        'Log-Electricity(kBtu)',
+        'Log-NaturalGas(kBtu)',
+        'Ratio_Electricity',
+        'Ratio_Steam',
+        'Ratio_Gas',
+        'Ratio_Steam+Gas',
+        "Ratio_Steam+Gas+Other",
+        'Log-TotalGHGEmissions']
 
     data_v3 = data_v2[prediction_features + target_features]
 

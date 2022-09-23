@@ -131,3 +131,6 @@ dmypy.json
 /dataset/
 /other_documents/
 /model/
+.csv
+.sav
+.plk

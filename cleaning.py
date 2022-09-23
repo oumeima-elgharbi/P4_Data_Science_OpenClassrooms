@@ -229,9 +229,9 @@ def dropping_negative_values(df):
     print("We have", len(cols_numeric) - 1, "numerical columns without the ENERGYSTARScore.")
 
     # We only keep the rows / buildings without negative values
-    df_positive = data_frame.loc[:, [x for x in cols_numeric if x not in ['ENERGYSTARScore']]]
+    df_numeric = data_frame.loc[:, [x for x in cols_numeric if x not in ['ENERGYSTARScore']]]
     data_frame = data_frame[
-        (df_positive.select_dtypes(include='number') >= 0).all(axis=1)].copy()  # all to get all columns
+        (df_numeric.select_dtypes(include='number') >= 0).all(axis=1)].copy()  # all to get all columns
 
     print("After :", data_frame.shape)
     return data_frame
@@ -322,10 +322,10 @@ def compute_total_energy(df):
 
     # On ne supprime que si le montant inférieur à 0 est significatif par rapport à la consommation totale ==> 37 lignes
     to_drop2 = np.abs(data_frame["RemainingEnergy(kBtu)"]) > (0.001 * data_frame['SiteEnergyUse(kBtu)'])
-    print(to_drop2)
+    #print(to_drop2)
 
     to_drop3 = np.abs(data_frame["RemainingEnergy(kBtu)"]) > (0.01 * data_frame['SiteEnergyUse(kBtu)'])
-    print(to_drop3)
+    #print(to_drop3)
 
     # suppression des consommations d'autres énérgie négatives lorsque significatives ==> 5 buildings
     to_drop = to_drop1 & to_drop2
@@ -337,6 +337,33 @@ def compute_total_energy(df):
     # Renomme la variable de consommation totale d'énergie
     data_frame = data_frame.rename(columns={"SiteEnergyUse(kBtu)": "TotalEnergy(kBtu)"})
     data_frame = data_frame.drop(columns=["RemainingEnergy(kBtu)", "RemainingEnergy(%)"])
+
+    print("After :", data_frame.shape)
+    return data_frame
+
+
+def compute_ratio_energy(df):
+    """
+
+    """
+    print("___Computing ratio___")
+    data_frame = df.copy()
+    print("Before :", data_frame.shape)
+
+    data_frame["Ratio_Electricity"] = data_frame["Electricity(kBtu)"] / data_frame["TotalEnergy(kBtu)"]
+
+    data_frame["Ratio_Steam"] = data_frame["SteamUse(kBtu)"] / data_frame["TotalEnergy(kBtu)"]
+
+    data_frame["Ratio_Gas"] = data_frame["NaturalGas(kBtu)"] / data_frame["TotalEnergy(kBtu)"]
+
+    data_frame["Ratio_Steam+Gas"] = (data_frame["NaturalGas(kBtu)"] + data_frame["SteamUse(kBtu)"]) / data_frame[
+        "TotalEnergy(kBtu)"]
+
+    data_frame["Ratio_Other"] = (data_frame["TotalEnergy(kBtu)"] - data_frame["NaturalGas(kBtu)"] - data_frame[
+        "SteamUse(kBtu)"] - data_frame["Electricity(kBtu)"]) / data_frame["TotalEnergy(kBtu)"]
+
+    data_frame["Ratio_Steam+Gas+Other"] = (data_frame["TotalEnergy(kBtu)"] - data_frame["Electricity(kBtu)"]) / \
+                                          data_frame["TotalEnergy(kBtu)"]
 
     print("After :", data_frame.shape)
     return data_frame
@@ -425,9 +452,10 @@ def cleaning_pipeline():
     verify_PropertyGFA(data_v8)  # data_v8 = input_propertyGFATotal(data_v7)
 
     data_v9 = compute_total_energy(data_v8)
+    data_v10 = compute_ratio_energy(data_v9)
 
-    print(data_v9.info())
-    save_dataset_csv(data_v9, cleaned_dataset_file)
+    print(data_v10.info())
+    save_dataset_csv(data_v10, cleaned_dataset_file)
     print("_____End of cleaning pipeline_____")
 
 

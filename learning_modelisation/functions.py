@@ -1,12 +1,33 @@
-# from cleaning import *
-
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 
 import warnings
 
 warnings.filterwarnings(action="ignore")
 
+def other_correlation_matrix(df):
+    numeric_columns = df.select_dtypes(include='number').columns.tolist()
+    numeric_columns.remove("ENERGYSTARScore")
+
+    df_to_corr = df[numeric_columns]
+
+    # we assign the type float to all the values of the matrix
+    df_to_corr = df_to_corr.astype(float)
+    corr = df_to_corr.corr(method='pearson')
+
+
+    plt.figure(figsize=(10, 8))
+    sns.set(font_scale=1)
+    plt.title('Correlation matrix for energy features with upper triangle masked.')
+
+    # to hide the upper triangle of the matrix
+    #trimask = np.zeros_like(corr)
+    #trimask[np.triu_indices_from(trimask)] = True
+    sns.heatmap(corr, annot=True, mask=(np.abs(corr) <= 0.4), vmin=0,
+                cmap='coolwarm')  # we don't have negative correlations here
+
+    plt.show()
 
 def display_distribution_per_feature(data_frame, all_features, nb_bins):
     """
