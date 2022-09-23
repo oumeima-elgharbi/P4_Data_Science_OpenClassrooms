@@ -128,9 +128,9 @@ dmypy.json
 # Pyre type checker
 .idea
 .pyre/
-/dataset/
 /other_documents/
-/model/
 .csv
 .sav
 .plk
+/learning_modelisation/
+/old_version/
