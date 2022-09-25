@@ -361,7 +361,7 @@ def compute_total_energy(df):
     # data_frame.loc[data_frame["RemainingEnergy(kBtu)"] < 0, "RemainingEnergy(kBtu)"] = 0
 
     # Renomme la variable de consommation totale d'énergie
-    data_frame = data_frame.rename(columns={"SiteEnergyUse(kBtu)": "TotalEnergy(kBtu)"})
+    #data_frame = data_frame.rename(columns={"SiteEnergyUse(kBtu)": "TotalEnergy(kBtu)"})
     data_frame = data_frame.drop(columns=["RemainingEnergy(kBtu)", "RemainingEnergy(%)"])
 
     print("After :", data_frame.shape)

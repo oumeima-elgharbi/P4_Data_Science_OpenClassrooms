@@ -10,7 +10,7 @@ pd.set_option('display.float_format', lambda x: '%.5f' % x)
 
 # Setting evaluation metric for regression
 global scoring
-scoring='r2'
+scoring = 'r2'
 
 global results
 results = pd.DataFrame({})
@@ -67,12 +67,13 @@ def evaluate_regression(model_name, result, y_test, y_pred):
         exp_y_pred = np.expm1(y_pred)
 
         fig = plt.figure(1)
-        fig.suptitle("Scatter plot of the predicted values as a function of the true values ; converted with exp(x)-1", fontsize=12)
+        fig.suptitle("Scatter plot of the predicted values as a function of the true values ; converted with exp(x)-1",
+                     fontsize=12)
         plt.legend("If the prediction was good, we would see a line.")
         plt.xlabel("Real values", fontsize=12)
         plt.ylabel("Predicted values", fontsize=12)
         plt.scatter(x=exp_y_test, y=exp_y_pred, color='green')
-        #fig.savefig('test.jpg')
+        # fig.savefig('test.jpg')
 
     # graph 3
     fig = plt.figure(2)

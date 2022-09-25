@@ -248,7 +248,7 @@ def delete_correlated_variables(df):
 
     target_linked = ['GHGEmissionsIntensity',
                      'SiteEUI(kBtu/sf)', 'SiteEUIWN(kBtu/sf)', 'SourceEUI(kBtu/sf)', 'SourceEUIWN(kBtu/sf)',
-                     'Electricity(kBtu)', 'SteamUse(kBtu)', 'NaturalGas(kBtu)', 'TotalEnergy(kBtu)']
+                     'Electricity(kBtu)', 'SteamUse(kBtu)', 'NaturalGas(kBtu)', 'SiteEnergyUse(kBtu)']
 
     # to_drop = list(set(high_correlated + target_linked))
     to_drop = high_correlated + target_linked
