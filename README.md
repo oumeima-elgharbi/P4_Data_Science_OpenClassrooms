@@ -52,6 +52,7 @@ Source  : https://data.seattle.gov/dataset/2016-Building-Energy-Benchmarking/2bp
 
 - Create a folder **model**
 
+- Create a folder **model/preprocessing**
 - Create a folder **model/energy**
 - Create a folder **model/CO2**
 - Create a folder **model/CO2_ENERGYSTARScore**
