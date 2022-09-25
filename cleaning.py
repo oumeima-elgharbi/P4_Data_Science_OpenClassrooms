@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import datetime
 
 # to compute time of pipeline
 from time import time, strftime, gmtime
@@ -59,6 +60,31 @@ def load_data(dataset_file):
 
     print("Initial shape :", dataset.shape)
     return dataset
+
+
+def remove_residential_buildings(df):
+    """
+
+    """
+    print("___Removing residential buildings___")
+    data_frame = df.copy()
+    print("Before :", data_frame.shape)
+
+    print("Before cleaning :")
+    categories_to_check = ["BuildingType", "PrimaryPropertyType"]
+    for category in categories_to_check:
+        print(data_frame[category].value_counts().sort_values())
+        print("\n\n")
+
+    residential_BuildingType = ["Multifamily MR (5-9)", "Multifamily LR (1-4)", "Multifamily HR (10+)"]
+    data_frame = data_frame[~data_frame["BuildingType"].isin(residential_BuildingType)]
+
+    print("After :", data_frame.shape)
+    categories_to_check = ["BuildingType", "PrimaryPropertyType"]
+    for category in categories_to_check:
+        print(data_frame[category].value_counts().sort_values())
+        print("\n\n")
+    return data_frame
 
 
 def dropping_non_relevant_columns(df):
@@ -322,10 +348,10 @@ def compute_total_energy(df):
 
     # On ne supprime que si le montant inférieur à 0 est significatif par rapport à la consommation totale ==> 37 lignes
     to_drop2 = np.abs(data_frame["RemainingEnergy(kBtu)"]) > (0.001 * data_frame['SiteEnergyUse(kBtu)'])
-    #print(to_drop2)
+    # print(to_drop2)
 
     to_drop3 = np.abs(data_frame["RemainingEnergy(kBtu)"]) > (0.01 * data_frame['SiteEnergyUse(kBtu)'])
-    #print(to_drop3)
+    # print(to_drop3)
 
     # suppression des consommations d'autres énérgie négatives lorsque significatives ==> 5 buildings
     to_drop = to_drop1 & to_drop2
@@ -337,6 +363,22 @@ def compute_total_energy(df):
     # Renomme la variable de consommation totale d'énergie
     data_frame = data_frame.rename(columns={"SiteEnergyUse(kBtu)": "TotalEnergy(kBtu)"})
     data_frame = data_frame.drop(columns=["RemainingEnergy(kBtu)", "RemainingEnergy(%)"])
+
+    print("After :", data_frame.shape)
+    return data_frame
+
+
+def compute_YearBuilt(df):
+    """
+
+    """
+    print("___Computing the years since the buildings were built___")
+    data_frame = df.copy()
+    print("Before :", data_frame.shape)
+
+    today = datetime.date.today()
+    year = today.year
+    data_frame["YearSinceBuilt"] = year - data_frame["YearBuilt"]
 
     print("After :", data_frame.shape)
     return data_frame
@@ -429,8 +471,10 @@ def cleaning_pipeline():
     print("_____Starting cleaning pipeline_____")
     raw_dataset = load_data(raw_dataset_file)
 
+    data_v0 = remove_residential_buildings(raw_dataset)
+
     # data_v1 = input_zipcode(raw_dataset)  # here because inputting needs all buildings
-    data_v1 = dropping_non_relevant_columns(raw_dataset)
+    data_v1 = dropping_non_relevant_columns(data_v0)
 
     display_countplot(data_v1, feature="ComplianceStatus")
     data_v2 = keep_compliant(data_v1)
@@ -452,7 +496,7 @@ def cleaning_pipeline():
     verify_PropertyGFA(data_v8)  # data_v8 = input_propertyGFATotal(data_v7)
 
     data_v9 = compute_total_energy(data_v8)
-    data_v10 = compute_ratio_energy(data_v9)
+    data_v10 = compute_YearBuilt(data_v9)
 
     print(data_v10.info())
     save_dataset_csv(data_v10, cleaned_dataset_file)

@@ -178,7 +178,7 @@ def density(df, lines=7, cols=4):
 ######################################
 
 global columns_to_categorize
-columns_to_categorize = ["OSEBuildingID", "BuildingType", "PrimaryPropertyType", "Neighborhood", "ZipCode", "CouncilDistrictCode",
+columns_to_categorize = ["OSEBuildingID", "YearBuilt", "BuildingType", "PrimaryPropertyType", "Neighborhood", "ZipCode", "CouncilDistrictCode",
                          "LargestPropertyUseType", "SecondLargestPropertyUseType", "ThirdLargestPropertyUseType"]
 
 
@@ -246,8 +246,9 @@ def delete_correlated_variables(df):
     # high_correlated = ['Electricity(kWh)', 'NaturalGas(therms)', 'PropertyGFABuilding(s)', 'LargestPropertyUseTypeGFA']
     high_correlated = ['Electricity(kWh)', 'NaturalGas(therms)']
 
-    target_linked = ['GHGEmissionsIntensity', 'SiteEnergyUseWN(kBtu)',
-                     'SiteEUI(kBtu/sf)', 'SiteEUIWN(kBtu/sf)', 'SourceEUI(kBtu/sf)', 'SourceEUIWN(kBtu/sf)']
+    target_linked = ['GHGEmissionsIntensity',
+                     'SiteEUI(kBtu/sf)', 'SiteEUIWN(kBtu/sf)', 'SourceEUI(kBtu/sf)', 'SourceEUIWN(kBtu/sf)',
+                     'Electricity(kBtu)', 'SteamUse(kBtu)', 'NaturalGas(kBtu)', 'TotalEnergy(kBtu)']
 
     # to_drop = list(set(high_correlated + target_linked))
     to_drop = high_correlated + target_linked
@@ -272,45 +273,32 @@ def exploration_pipeline():
 
 
     print("___Boxplot categorical features / target___")
-    #features_to_predict = ["TotalGHGEmissions", "TotalEnergy(kBtu)", "Electricity(kBtu)", "NaturalGas(kBtu)", "SteamUse(kBtu)"]
+    categorical_features = ["Neighborhood", "BuildingType", "PrimaryPropertyType"]
+    features_to_predict = ["energy(kBtu)",
+                           "TotalGHGEmissions"]
 
-    # Variable BuildingType / émission CO2
-    box_categorical(data_v1, col_categorical="BuildingType", col_numeric="TotalGHGEmissions")
-    #display_boxplot_per_feature(data_v1, all_features=features_to_predict, category="BuildingType")
-
-    # Variable PrimaryPropertyType" / émission CO2
-    box_categorical(data_v1, col_categorical="PrimaryPropertyType", col_numeric="TotalGHGEmissions")
-    #display_boxplot_per_feature(data_v1, all_features=features_to_predict, category="PrimaryPropertyType")
-
-    # Variable Neighborhood / émission CO2
-    box_categorical(data_v1, col_categorical="Neighborhood", col_numeric="TotalGHGEmissions")
-    #display_boxplot_per_feature(data_v1, all_features=features_to_predict, category="Neighborhood")
+    print("Features to predict : ", features_to_predict)
+    for feature_to_predict in features_to_predict:
+        for feature in categorical_features:
+            box_categorical(data_v1, col_categorical=feature, col_numeric=feature_to_predict)
 
 
     data_v2 = log_transformation_based_on_skewness(data_v1)
 
-    print("___Keeping only relevant features___") # "CouncilDistrictCode",
+    print("___Keeping only relevant features___")
     prediction_features = ["Neighborhood", "BuildingType", "PrimaryPropertyType", "ENERGYSTARScore",
-                       "YearBuilt",
-                       'Log-NumberofFloors',
-                       'Log-PropertyGFATotal',
-                       'Log-PropertyGFABuilding(s)',
-                       'Log-LargestPropertyUseTypeGFA',
-                       'Log-SecondLargestPropertyUseTypeGFA',
-                       'Log-ThirdLargestPropertyUseTypeGFA'] ## total / parking
+                           "YearSinceBuilt",
+                           'Log-NumberofFloors',
+                           'Log-PropertyGFATotal',
+                           'Log-PropertyGFABuilding(s)',
+                           'Log-LargestPropertyUseTypeGFA',
+                           'Log-SecondLargestPropertyUseTypeGFA',
+                           'Log-ThirdLargestPropertyUseTypeGFA'] ## total / parking
     # , "LargestPropertyUseType", "SecondLargestPropertyUseType", "ThirdLargestPropertyUseType",
     # 'Log-PropertyGFABuilding(s)', 'Log-LargestPropertyUseTypeGFA',
 
     target_features = [
-        'Log-TotalEnergy(kBtu)',
-        'Log-SteamUse(kBtu)',
-        'Log-Electricity(kBtu)',
-        'Log-NaturalGas(kBtu)',
-        'Ratio_Electricity',
-        'Ratio_Steam',
-        'Ratio_Gas',
-        'Ratio_Steam+Gas',
-        "Ratio_Steam+Gas+Other",
+        'Log-energy(kBtu)',
         'Log-TotalGHGEmissions']
 
     data_v3 = data_v2[prediction_features + target_features]

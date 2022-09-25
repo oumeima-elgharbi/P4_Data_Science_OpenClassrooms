@@ -8,6 +8,10 @@ from sklearn.metrics import mean_absolute_error, r2_score, mean_squared_error, m
 
 pd.set_option('display.float_format', lambda x: '%.5f' % x)
 
+# Setting evaluation metric for regression
+global scoring
+scoring='r2'
+
 global results
 results = pd.DataFrame({})
 
@@ -118,7 +122,7 @@ def display_barplot_errors(results, baseline_model, title, metric):
     """
 
     """
-    sns.set(rc={'figure.figsize': (14, 10)})
+    sns.set(rc={'figure.figsize': (23, 10), "axes.titlesize": 15, "axes.labelsize": 15})
     plt.title(title)
     graph = sns.barplot(x=results["Model"],
                         y=results[metric])

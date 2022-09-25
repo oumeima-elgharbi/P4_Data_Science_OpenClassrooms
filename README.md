@@ -35,38 +35,31 @@ While trying to predict the CO2, we tried three methods :
 1) Experiment 1 : predict the energy used by the buildings and use it to predict the CO2.
     **This first experiment was the best, and it is the one presented for the evaluation of the project.**
 
-2) Experiment 2 : predict the ratio of energy used and use these predictions to predict the CO2.
-    This second experiment was not successful.
-
 3) Experiment 3 : predict the total energy of the buildings. Then, to predict the CO2, we use all the buildings' properties, the ratio of electricity, steam and gas and the predicted total energy.
     This third experiment produced the best result, however to use the energy ratio to predict the CO2, depending on the interpretation of the project wording could be considered as data leak or not.
 
 ### Dataset folder
 
 - Create a folder **dataset**
+
 - Create a folder **dataset/source**
 - Create a folder **dataset/cleaned**
+
+- Create a folder **dataset/energy**
+- Create a folder **dataset/CO2**
+- Create a folder **dataset/CO2_ENERGYSTARScore**
+
 - Download the csv at this address in the folder **source** : https://s3.eu-west-1.amazonaws.com/course.oc-static.com/projects/Data_Scientist_P4/2016_Building_Energy_Benchmarking.csv
 
 Source  : https://data.seattle.gov/dataset/2016-Building-Energy-Benchmarking/2bpz-gwpy
 
-### Dataset folder in Experiment folders
-- Create a folder **dataset**
-- Create a folder **dataset/CO2**
-- Create a folder **dataset/CO2_EnergyStarScore**
-- Create a folder **dataset/energy**
-
-Copy/Paste the folder **dataset** in each **Experiment** folder or just in the folder **Experiment_1_log**
-
 ### Model folders
 
 - Create a folder **model**
+
+- Create a folder **model/energy**
 - Create a folder **model/CO2**
-- Create a folder **model/CO2_EnergyStarScore**
-- Create a folder **model/electricity**
-- Create a folder **model/gas**
-- Create a folder **model/steam**
-- Create a folder **model/total_energy**
+- Create a folder **model/CO2_ENERGYSTARScore**
 
 Copy/Paste the folder **model** in each **Experiment** folder or just in the folder **Experiment_1_log**
 
@@ -94,7 +87,7 @@ NB : the execution of each *prediction notebook* can take around 5 minutes for a
 ```bash
 python cleaning.py 
 python exploration.py
-run P4_03_feature_engineering_energy.ipynb
+run P4_03_feature_engineering.ipynb
 ```
 
 Or,
@@ -105,24 +98,10 @@ run P4_02_exploratory_data_analysis.ipynb
 run P4_03_feature_engineering_energy.ipynb
 ```
 
-#### 2) Run the Energy prediction notebooks
+#### 2) Run the predictions notebooks
 
 ```bash
-run P4_04_experiment_1_prediction_electricity.ipynb
-run P4_04_experiment_1_prediction_natural_gas.ipynb
-run P4_04_experiment_1_prediction_steam.ipynb
-run P4_04_experiment_1_prediction_total_energy.ipynb
-```
-
-#### 3) Run the CO2 (EnergyStarScore) prediction preprocessing
-
-```bash
-run P4_05_experiment_1_feature_engineering_CO2.ipynb
-```
-
-#### 4) Run the CO2 (EnergyStarScore) prediction notebooks
-
-```bash
-run P4_06_experiment_1_prediction_CO2.ipynb
-run P4_07_experiment_1_prediction_CO2_EnergyStarScore.ipynb
+run P4_04_prediction_SiteEnergyUseWN.ipynb
+run P4_05_prediction_CO2.ipynb
+run P4_06_prediction_CO2_ENERGYSTARScore.ipynb
 ```
