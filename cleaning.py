@@ -361,7 +361,7 @@ def compute_total_energy(df):
     # data_frame.loc[data_frame["RemainingEnergy(kBtu)"] < 0, "RemainingEnergy(kBtu)"] = 0
 
     # Renomme la variable de consommation totale d'énergie
-    #data_frame = data_frame.rename(columns={"SiteEnergyUse(kBtu)": "TotalEnergy(kBtu)"})
+    # data_frame = data_frame.rename(columns={"SiteEnergyUse(kBtu)": "TotalEnergy(kBtu)"})
     data_frame = data_frame.drop(columns=["RemainingEnergy(kBtu)", "RemainingEnergy(%)"])
 
     print("After :", data_frame.shape)
@@ -382,6 +382,41 @@ def compute_YearBuilt(df):
 
     print("After :", data_frame.shape)
     return data_frame
+
+
+def remove_percentile_outliers(data_frame, upper_percentile, lower_percentile, features):
+    """
+
+    :param data_frame:
+    :param upper_percentile:
+    :param lower_percentile:
+    :param features: (list) of two elements
+    :return:
+    """
+    assert len(features) == 2, print("Features must contains two features only.")
+
+    print("___Removing outliers as regard of quantiles___")
+    df = data_frame.copy()
+    print("Before :", df.shape)
+
+    upper_outliers = df[(df[features[0]] > df[features[0]].quantile(upper_percentile)) | (
+            df[features[1]] > df[features[1]].quantile(upper_percentile))]
+    lower_outliers = df[(df[features[0]] < df[features[0]].quantile(lower_percentile)) | (
+            df[features[1]] < df[features[1]].quantile(lower_percentile))]
+
+    # for each building outlier, we save their index in the list called index_to_drop
+    l_upper = upper_outliers.index.tolist()
+    l_lower = lower_outliers.index.tolist()
+    index_to_drop = list()
+    index_to_drop.extend(l_upper)
+    index_to_drop.extend(l_lower)
+
+    print("We check that we have all the indexes to drop :", len(index_to_drop))
+    print("We drop :", upper_outliers.shape[0] + lower_outliers.shape[0], "buildings.")
+    df = df.drop(index=index_to_drop)
+
+    print("After :", df.shape)
+    return df
 
 
 def compute_ratio_energy(df):
@@ -472,8 +507,8 @@ def cleaning_pipeline():
     raw_dataset = load_data(raw_dataset_file)
 
     data_v0 = remove_residential_buildings(raw_dataset)
+    replace_value_for_a_feature(data_v0, "NumberofBuildings", 0, 1)
 
-    # data_v1 = input_zipcode(raw_dataset)  # here because inputting needs all buildings
     data_v1 = dropping_non_relevant_columns(data_v0)
 
     display_countplot(data_v1, feature="ComplianceStatus")
@@ -498,8 +533,10 @@ def cleaning_pipeline():
     data_v9 = compute_total_energy(data_v8)
     data_v10 = compute_YearBuilt(data_v9)
 
-    print(data_v10.info())
-    save_dataset_csv(data_v10, cleaned_dataset_file)
+    data_v11 = remove_percentile_outliers(data_v10, 0.995, 0.005, ["TotalGHGEmissions", "SiteEnergyUseWN(kBtu)"])
+
+    print(data_v11.info())
+    save_dataset_csv(data_v11, cleaned_dataset_file)
     print("_____End of cleaning pipeline_____")
 
 

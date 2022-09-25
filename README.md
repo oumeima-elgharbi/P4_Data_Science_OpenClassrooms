@@ -1,7 +1,5 @@
 # Project 4 Data Science OpenClassrooms
 
-- cleaning add outliers v11 / add datav00 correct building
-
 ## Supervised Learning : Regression
 
 Author : Oumeima EL GHARBI.

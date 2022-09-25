@@ -274,7 +274,7 @@ def exploration_pipeline():
 
     print("___Boxplot categorical features / target___")
     categorical_features = ["Neighborhood", "BuildingType", "PrimaryPropertyType"]
-    features_to_predict = ["energy(kBtu)",
+    features_to_predict = ["SiteEnergyUseWN(kBtu)",
                            "TotalGHGEmissions"]
 
     print("Features to predict : ", features_to_predict)
@@ -286,19 +286,20 @@ def exploration_pipeline():
     data_v2 = log_transformation_based_on_skewness(data_v1)
 
     print("___Keeping only relevant features___")
-    prediction_features = ["Neighborhood", "BuildingType", "PrimaryPropertyType", "ENERGYSTARScore",
-                           "YearSinceBuilt",
+    prediction_features = ["Neighborhood", "BuildingType", "PrimaryPropertyType",
+                           "ENERGYSTARScore",
+
                            'Log-NumberofFloors',
                            'Log-PropertyGFATotal',
                            'Log-PropertyGFABuilding(s)',
+
                            'Log-LargestPropertyUseTypeGFA',
-                           'Log-SecondLargestPropertyUseTypeGFA',
-                           'Log-ThirdLargestPropertyUseTypeGFA'] ## total / parking
+                           'Log-SecondLargestPropertyUseTypeGFA'] ## total / parking
     # , "LargestPropertyUseType", "SecondLargestPropertyUseType", "ThirdLargestPropertyUseType",
     # 'Log-PropertyGFABuilding(s)', 'Log-LargestPropertyUseTypeGFA',
 
     target_features = [
-        'Log-energy(kBtu)',
+        'Log-SiteEnergyUseWN(kBtu)',
         'Log-TotalGHGEmissions']
 
     data_v3 = data_v2[prediction_features + target_features]
